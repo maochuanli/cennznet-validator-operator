@@ -68,7 +68,7 @@ def create_update_operator_secret(session_key_json_obj):
 
 def get_namespace_for_current_pod():
     if not os.path.exists('/var/run/secrets/kubernetes.io/serviceaccount/namespace'):
-        return 'az-ie-cennznet-validator-operator'
+        return 'az-ie-cennznet-validator-operator-XXX'
     
     cmd = 'cat /var/run/secrets/kubernetes.io/serviceaccount/namespace'
     rc, out = run_cmd(cmd)
@@ -99,33 +99,8 @@ def convert_object_2_json(python_object):
         pass
 
 def loop_work():
-    secret_obj = [
-        {'namespace': 'az-ie-cennznet-validators-blue',
-        'pod_name': 'az-ie-cennznet-v-b-0', 
-        'session_key': 'olympic vacant sight husband taste staff fragile actual region satoshi possible bronze clown address cotton silly detect private fit solar squeeze'},
-        {'namespace': 'az-ie-cennznet-validators-blue',
-        'pod_name': 'az-ie-cennznet-v-b-1', 
-        'session_key': 'spawn devote citizen basic mountain humble title mutual beauty fringe blue oval decide confirm noodle duck famous chief edit ethics wonder'},
-        {'namespace': 'az-ie-cennznet-validators-blue',
-        'pod_name': 'az-ie-cennznet-v-b-2', 
-        'session_key': 'wrist success tank profit jar strike ecology remain rare aware divorce album sentence ahead across alpha thunder cloth dinner rhythm seven'},
-        {'namespace': 'az-ie-cennznet-validators-blue',
-        'pod_name': 'az-ie-cennznet-v-b-3', 
-        'session_key': 'buyer panther dumb suspect jaguar lunar what vintage sugar kangaroo security thumb apology consider column job never observe arena day fever'},
-
-        {'namespace': 'az-ie-cennznet-validators-green',
-        'pod_name': 'az-ie-cennznet-v-g-0', 
-        'session_key': ''},
-        {'namespace': 'az-ie-cennznet-validators-green',
-        'pod_name': 'az-ie-cennznet-v-g-0', 
-        'session_key': ''},
-        {'namespace': 'az-ie-cennznet-validators-green',
-        'pod_name': 'az-ie-cennznet-v-g-0', 
-        'session_key': ''},
-        {'namespace': 'az-ie-cennznet-validators-green',
-        'pod_name': 'az-ie-cennznet-v-g-0', 
-        'session_key': ''},
-    ]
+    secret_str = get_current_secret_as_str()
+    secret_obj = convert_json_2_object(secret_str)
     create_update_operator_secret(secret_obj)
 
 def main():

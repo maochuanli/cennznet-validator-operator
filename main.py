@@ -5,6 +5,7 @@ import subprocess
 import json
 import base64
 import datetime
+import traceback
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
@@ -26,8 +27,9 @@ def get_current_secret_as_str():
     rc, out = run_cmd(cmd)
     json_obj = convert_json_2_object(out)
     try:
-        secret = json_obj['data'][os.path.basename(SECRET_FILE_NAME)]
-        return secret
+        secret_base64 = json_obj['data'][os.path.basename(SECRET_FILE_NAME)]
+        secret_str = convert_base64_2_str(secret_base64)
+        return secret_str
     except:
         pass
 
@@ -68,7 +70,7 @@ def create_update_operator_secret(session_key_json_obj):
 
 def get_namespace_for_current_pod():
     if not os.path.exists('/var/run/secrets/kubernetes.io/serviceaccount/namespace'):
-        return 'az-ie-cennznet-validator-operator-XXX'
+        return 'az-ie-cennznet-validator-operator'
     
     cmd = 'cat /var/run/secrets/kubernetes.io/serviceaccount/namespace'
     rc, out = run_cmd(cmd)
@@ -89,17 +91,18 @@ def convert_str_2_base64(message):
 def convert_json_2_object(json_str):
     try:
         return json.loads(json_str)
-    except:
-        pass
+    except Exception:
+        eprint(traceback.format_exc())
 
 def convert_object_2_json(python_object):
     try:
         return json.dumps(python_object)
-    except:
-        pass
+    except Exception:
+        eprint(traceback.format_exc())
 
 def loop_work():
     secret_str = get_current_secret_as_str()
+    
     secret_obj = convert_json_2_object(secret_str)
     create_update_operator_secret(secret_obj)
 
@@ -107,7 +110,7 @@ def main():
     start_http_server(8080)
     while True:
         loop_work()
-        time.sleep(30)
+        time.sleep(60)
 
 if __name__ == '__main__':
     CURRENT_NAMESPACE = get_namespace_for_current_pod()

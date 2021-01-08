@@ -170,10 +170,14 @@ def loop_work():
     CURRNET_SECRET_OBJ = None
 
 def main():
-    start_http_server(8080)
-    while True:
-        loop_work()
-        time.sleep(60)
+    try:
+        start_http_server(8080)
+        while True:
+            loop_work()
+            time.sleep(60)
+    except Exception:
+        eprint(traceback.format_exc())
+    
 
 if __name__ == '__main__':
     CURRENT_NAMESPACE = get_namespace_for_current_pod()

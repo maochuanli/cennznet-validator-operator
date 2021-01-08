@@ -148,7 +148,7 @@ def extract_pods_metrics():
         eprint(record)
 
 def show_data_frame():
-    pd.set_option('display.max_colwidth', -1)
+    pd.set_option('display.max_colwidth', 120)
     df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=['namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized','substrate_block_height_sync_target'])
     eprint(df)
 

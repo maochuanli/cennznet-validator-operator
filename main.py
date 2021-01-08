@@ -6,10 +6,14 @@ import json
 import base64
 import datetime
 import traceback
+import jmespath
+import requests
+
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
 SECRET_FILE_NAME = '/tmp/secret.json'
+CURRNET_SECRET_OBJ = None
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -21,6 +25,9 @@ def run_cmd(cmd):
     eprint('{},{}'.format(process.returncode, result.decode()))
     return process.returncode, result.decode()
 
+def http_get(url):
+    r = requests.get(url)
+    return r.text
 
 def get_current_secret_as_str():
     cmd = 'kubectl get secret {} -n {} -o json'.format(SECRET_NAME, CURRENT_NAMESPACE)
@@ -34,10 +41,12 @@ def get_current_secret_as_str():
         pass
 
 def backup_current_secret():
-    current_secret = get_current_secret_as_str()
-    if not current_secret:
+    # current_secret = get_current_secret_as_str()
+    if not CURRNET_SECRET_OBJ:
         eprint('no secret at present!')
         return True
+
+    current_secret = convert_object_2_json(CURRNET_SECRET_OBJ)
 
     with open(SECRET_FILE_NAME, 'w') as f:
         f.write(current_secret)
@@ -100,11 +109,54 @@ def convert_object_2_json(python_object):
     except Exception:
         eprint(traceback.format_exc())
 
+def get_pod_ip(namespace, pod_name):
+    cmd = 'kubectl get pod {} -n {} -o json'.format(pod_name, namespace)
+    rc, out = run_cmd(cmd)
+    json_obj = convert_json_2_object(out)
+    pod_ip = jmespath.search('status.podIP', json_obj)
+    return pod_ip
+
+def extract_pods_ips():
+    for record in CURRNET_SECRET_OBJ:
+        namespace = record['namespace']
+        pod_name = record['pod_name']
+        
+        pod_ip = get_pod_ip(namespace, pod_name)
+        record['pod_ip'] = pod_ip
+        eprint(namespace, pod_name, pod_ip)
+
+def extract_pods_metrics():
+    for record in CURRNET_SECRET_OBJ:
+        namespace = record['namespace']
+        pod_name = record['pod_name']
+        pod_ip = record['pod_ip']
+        pod_metrics_url = 'http://{}:{}/metrics'.format(pod_ip, 9615)
+        pod_metrics_txt = http_get(pod_metrics_url)
+        pod_metrics = {}
+        lines = pod_metrics_txt.split('\n')
+
+        for line in lines:
+            if line.startswith('substrate_block_height{status="best"}'):
+                pod_metrics['substrate_block_height_best'] = line.split()[-1]
+            elif line.startswith('substrate_block_height{status="finalized"}'):
+                pod_metrics['substrate_block_height_finalized'] = line.split()[-1]
+            elif line.startswith('substrate_block_height{status="sync_target"}'):
+                pod_metrics['substrate_block_height_sync_target'] = line.split()[-1]
+
+        record['pod_metrics'] = pod_metrics
+        eprint(namespace, pod_name, pod_ip, pod_metrics)
+
 def loop_work():
+    global CURRNET_SECRET_OBJ
     secret_str = get_current_secret_as_str()
-    
-    secret_obj = convert_json_2_object(secret_str)
-    create_update_operator_secret(secret_obj)
+    CURRNET_SECRET_OBJ = convert_json_2_object(secret_str)
+    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
+        extract_pods_ips()
+        extract_pods_metrics()
+
+        create_update_operator_secret(CURRNET_SECRET_OBJ)
+    # reset secret obj 
+    CURRNET_SECRET_OBJ = None
 
 def main():
     start_http_server(8080)

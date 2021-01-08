@@ -153,6 +153,7 @@ def show_data_frame():
     df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=['namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized','substrate_block_height_sync_target'])
     eprint(df)
 
+
 def loop_work():
     global CURRNET_SECRET_OBJ
     secret_str = get_current_secret_as_str()

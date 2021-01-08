@@ -22,8 +22,9 @@ def run_cmd(cmd):
     eprint('CMD: ' + cmd)
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     result = process.communicate()[0]
-    eprint('{},{}'.format(process.returncode, result.decode()))
-    return process.returncode, result.decode()
+    result_txt = result.decode()
+    eprint('{},{}'.format(process.returncode, result_txt[:100]))
+    return process.returncode, result_txt
 
 def http_get(url):
     r = requests.get(url)
@@ -132,19 +133,18 @@ def extract_pods_metrics():
         pod_ip = record['pod_ip']
         pod_metrics_url = 'http://{}:{}/metrics'.format(pod_ip, 9615)
         pod_metrics_txt = http_get(pod_metrics_url)
-        pod_metrics = {}
+
         lines = pod_metrics_txt.split('\n')
 
         for line in lines:
             if line.startswith('substrate_block_height{status="best"}'):
-                pod_metrics['substrate_block_height_best'] = line.split()[-1]
+                record['substrate_block_height_best'] = line.split()[-1]
             elif line.startswith('substrate_block_height{status="finalized"}'):
-                pod_metrics['substrate_block_height_finalized'] = line.split()[-1]
+                record['substrate_block_height_finalized'] = line.split()[-1]
             elif line.startswith('substrate_block_height{status="sync_target"}'):
-                pod_metrics['substrate_block_height_sync_target'] = line.split()[-1]
+                record['substrate_block_height_sync_target'] = line.split()[-1]
 
-        record['pod_metrics'] = pod_metrics
-        eprint(namespace, pod_name, pod_ip, pod_metrics)
+        eprint(record)
 
 def loop_work():
     global CURRNET_SECRET_OBJ

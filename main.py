@@ -18,6 +18,7 @@ CURRNET_SECRET_OBJ = None
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+    sys.stderr.flush()
 
 def run_cmd(cmd):
     eprint('CMD: ' + cmd)

@@ -8,6 +8,7 @@ import datetime
 import traceback
 import jmespath
 import requests
+import pandas as pd
 
 
 CURRENT_NAMESPACE = 'N/A'
@@ -146,6 +147,10 @@ def extract_pods_metrics():
 
         eprint(record)
 
+def show_data_frame():
+    df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=['namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized','substrate_block_height_sync_target'])
+    eprint(df)
+    
 def loop_work():
     global CURRNET_SECRET_OBJ
     secret_str = get_current_secret_as_str()
@@ -153,6 +158,7 @@ def loop_work():
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         extract_pods_ips()
         extract_pods_metrics()
+        show_data_frame()
 
         create_update_operator_secret(CURRNET_SECRET_OBJ)
     # reset secret obj 

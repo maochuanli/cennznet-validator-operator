@@ -115,9 +115,12 @@ def convert_object_2_json(python_object):
 def get_pod_ip(namespace, pod_name):
     cmd = 'kubectl get pod {} -n {} -o json'.format(pod_name, namespace)
     rc, out = run_cmd(cmd)
-    json_obj = convert_json_2_object(out)
-    pod_ip = jmespath.search('status.podIP', json_obj)
-    return pod_ip
+    try:
+        json_obj = convert_json_2_object(out)
+        pod_ip = jmespath.search('status.podIP', json_obj)
+        return pod_ip
+    except Exception:
+        eprint(traceback.format_exc())
 
 def extract_pods_ips():
     for record in CURRNET_SECRET_OBJ:
@@ -133,20 +136,25 @@ def extract_pods_metrics():
         namespace = record['namespace']
         pod_name = record['pod_name']
         pod_ip = record['pod_ip']
+        if not pod_ip:
+            eprint('{}/{} pod ip {}, cannot extract metrics'.format(namespace, pod_name, pod_ip))
+            return
         pod_metrics_url = 'http://{}:{}/metrics'.format(pod_ip, 9615)
-        pod_metrics_txt = http_get(pod_metrics_url)
+        try:
+            pod_metrics_txt = http_get(pod_metrics_url)
 
-        lines = pod_metrics_txt.split('\n')
+            lines = pod_metrics_txt.split('\n')
 
-        for line in lines:
-            if line.startswith('substrate_block_height{status="best"}'):
-                record['substrate_block_height_best'] = line.split()[-1]
-            elif line.startswith('substrate_block_height{status="finalized"}'):
-                record['substrate_block_height_finalized'] = line.split()[-1]
-            elif line.startswith('substrate_block_height{status="sync_target"}'):
-                record['substrate_block_height_sync_target'] = line.split()[-1]
+            for line in lines:
+                if line.startswith('substrate_block_height{status="best"}'):
+                    record['substrate_block_height_best'] = line.split()[-1]
+                elif line.startswith('substrate_block_height{status="finalized"}'):
+                    record['substrate_block_height_finalized'] = line.split()[-1]
+                elif line.startswith('substrate_block_height{status="sync_target"}'):
+                    record['substrate_block_height_sync_target'] = line.split()[-1]
+        except Exception:
+            eprint(traceback.format_exc())
 
-        eprint(record)
 
 def show_data_frame():
     pd.set_option('display.max_rows', None)

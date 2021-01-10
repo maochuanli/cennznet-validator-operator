@@ -138,6 +138,9 @@ def extract_pods_metrics():
         pod_ip = record['pod_ip']
         if not pod_ip:
             eprint('{}/{} pod ip {}, cannot extract metrics'.format(namespace, pod_name, pod_ip))
+            record['substrate_block_height_best'] = 0
+            record['substrate_block_height_finalized'] = 0
+            record['substrate_block_height_sync_target'] = 0
             return
         pod_metrics_url = 'http://{}:{}/metrics'.format(pod_ip, 9615)
         try:
@@ -154,6 +157,9 @@ def extract_pods_metrics():
                     record['substrate_block_height_sync_target'] = line.split()[-1]
         except Exception:
             eprint(traceback.format_exc())
+            record['substrate_block_height_best'] = 0
+            record['substrate_block_height_finalized'] = 0
+            record['substrate_block_height_sync_target'] = 0
 
 
 def show_data_frame():

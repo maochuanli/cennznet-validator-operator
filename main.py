@@ -146,11 +146,11 @@ def get_max_best_finalized_number():
     best, finalized = 0, 0
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         for record in CURRNET_SECRET_OBJ:
-            tmp_best = record['substrate_block_height_best']
-            tmp_finalized = record['substrate_block_height_finalized']
-            if int(tmp_best) > best:
+            tmp_best = int(record['substrate_block_height_best'])
+            tmp_finalized = int(record['substrate_block_height_finalized'])
+            if tmp_best > best:
                 best = tmp_best
-            if int(tmp_finalized) > finalized:
+            if tmp_finalized > finalized:
                 finalized = tmp_finalized
 
     return best, finalized
@@ -159,8 +159,8 @@ def get_max_best_finalized_number():
 def update_node_status(best, finalized):
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         for record in CURRNET_SECRET_OBJ:
-            tmp_best = record['substrate_block_height_best']
-            tmp_finalized = record['substrate_block_height_finalized']
+            tmp_best = int(record['substrate_block_height_best'])
+            tmp_finalized = int(record['substrate_block_height_finalized'])
             if (best - tmp_best) > 6 or (tmp_finalized - finalized) > 6:
                 record['healthy'] = False
             else:

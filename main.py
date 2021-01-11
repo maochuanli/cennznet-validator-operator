@@ -161,7 +161,7 @@ def update_node_status(best, finalized):
         for record in CURRNET_SECRET_OBJ:
             tmp_best = int(record['substrate_block_height_best'])
             tmp_finalized = int(record['substrate_block_height_finalized'])
-            if (best - tmp_best) > 6 or (tmp_finalized - finalized) > 6:
+            if (best - tmp_best) > 6 or (finalized - tmp_finalized) > 6:
                 record['healthy'] = False
             else:
                 record['healthy'] = True

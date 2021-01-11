@@ -25,7 +25,7 @@ def run_cmd(cmd):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     result = process.communicate()[0]
     result_txt = result.decode()
-    if process.returncode == 0:
+    if process.returncode != 0:
         eprint('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt
 

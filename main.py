@@ -25,7 +25,8 @@ def run_cmd(cmd):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     result = process.communicate()[0]
     result_txt = result.decode()
-    eprint('{},{}'.format(process.returncode, result_txt[:100]))
+    if process.returncode == 0:
+        eprint('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt
 
 def http_get(url):
@@ -44,7 +45,6 @@ def get_current_secret_as_str():
         pass
 
 def backup_current_secret():
-    # current_secret = get_current_secret_as_str()
     if not CURRNET_SECRET_OBJ:
         eprint('no secret at present!')
         return True
@@ -131,6 +131,29 @@ def extract_pods_ips():
         record['pod_ip'] = pod_ip
         eprint(namespace, pod_name, pod_ip)
 
+def get_max_best_finalized_number():
+    best, finalized = 0, 0
+    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
+        for record in CURRNET_SECRET_OBJ:
+            tmp_best = record['substrate_block_height_best']
+            tmp_finalized = record['substrate_block_height_finalized']
+            if tmp_best > best:
+                best = tmp_best
+            if tmp_finalized > finalized:
+                finalized = tmp_finalized
+
+    return best, finalized
+
+def update_node_status(best, finalized):
+    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
+        for record in CURRNET_SECRET_OBJ:
+            tmp_best = record['substrate_block_height_best']
+            tmp_finalized = record['substrate_block_height_finalized']
+            if (best - tmp_best) > 6 or (tmp_finalized - finalized) > 6:
+                record['healthy'] = False
+            else:
+                record['healthy'] = True
+
 def extract_pods_metrics():
     for record in CURRNET_SECRET_OBJ:
         namespace = record['namespace']
@@ -166,7 +189,7 @@ def show_data_frame():
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
-    df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=['namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized','substrate_block_height_sync_target'])
+    df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=['namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized','healthy'])
     eprint(df)
 
 
@@ -177,6 +200,8 @@ def loop_work():
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         extract_pods_ips()
         extract_pods_metrics()
+        best, finalized = get_max_best_finalized_number()
+        update_node_status(best, finalized)
         show_data_frame()
 
         create_update_operator_secret(CURRNET_SECRET_OBJ)

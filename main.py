@@ -137,9 +137,9 @@ def get_max_best_finalized_number():
         for record in CURRNET_SECRET_OBJ:
             tmp_best = record['substrate_block_height_best']
             tmp_finalized = record['substrate_block_height_finalized']
-            if tmp_best > best:
+            if long(tmp_best) > best:
                 best = tmp_best
-            if tmp_finalized > finalized:
+            if long(tmp_finalized) > finalized:
                 finalized = tmp_finalized
 
     return best, finalized

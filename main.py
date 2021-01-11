@@ -122,6 +122,16 @@ def get_pod_ip(namespace, pod_name):
     except Exception:
         eprint(traceback.format_exc())
 
+def get_pod_restart_count(namespace, pod_name):
+    cmd = 'kubectl get pod {} -n {} -o json'.format(pod_name, namespace)
+    rc, out = run_cmd(cmd)
+    try:
+        json_obj = convert_json_2_object(out)
+        restart_count = jmespath.search('status.containerStatuses[0].restartCount', json_obj)
+        return restart_count
+    except Exception:
+        eprint(traceback.format_exc())
+
 def extract_pods_ips():
     for record in CURRNET_SECRET_OBJ:
         namespace = record['namespace']
@@ -129,6 +139,7 @@ def extract_pods_ips():
         
         pod_ip = get_pod_ip(namespace, pod_name)
         record['pod_ip'] = pod_ip
+        record['restart_count'] = get_pod_restart_count(namespace, pod_name)
         eprint(namespace, pod_name, pod_ip)
 
 def get_max_best_finalized_number():
@@ -189,7 +200,7 @@ def show_data_frame():
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
-    df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=['namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized','healthy'])
+    df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=['namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized','healthy', 'restart_count'])
     eprint(df)
 
 

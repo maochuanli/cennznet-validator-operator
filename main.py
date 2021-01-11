@@ -155,6 +155,7 @@ def get_max_best_finalized_number():
 
     return best, finalized
 
+
 def update_node_status(best, finalized):
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         for record in CURRNET_SECRET_OBJ:

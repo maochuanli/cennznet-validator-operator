@@ -142,6 +142,7 @@ def get_pod_restart_count(namespace, pod_name):
         return restart_count
     except Exception:
         eprint(traceback.format_exc())
+    return "-1"
 
 def extract_pods_ips():
     for record in CURRNET_SECRET_OBJ:
@@ -299,13 +300,13 @@ def loop_work():
                 remove_session_keys(namespace, pod_name)
                 time.sleep(5)
                 # current_restart_count = int(record['restart_count'])
-                # new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
-                # eprint('current_restart_count {}, new_restart_count {}'.format(current_restart_count, new_restart_count))
+                new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
+                eprint('current_restart_count {}, new_restart_count {}'.format(current_restart_count, new_restart_count))
                 if True: #new_restart_count <= current_restart_count
                     eprint('need to kill the pod to force it to restart...')
                     kill_pod(namespace, pod_name)
-                    new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
-                    record['restart_count'] = new_restart_count
+                    # new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
+                    # record['restart_count'] = new_restart_count
                 record['state'] == 'suspension'
                 suspended_records.append(record)
             elif record['state'] == 'idle' and record['healthy'] == True:

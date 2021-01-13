@@ -303,7 +303,7 @@ def loop_work():
                 time.sleep(5)
                 # current_restart_count = int(record['restart_count'])
                 new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
-                eprint('current_restart_count {}, new_restart_count {}'.format(current_restart_count, new_restart_count))
+                # eprint('current_restart_count {}, new_restart_count {}'.format(current_restart_count, new_restart_count))
                 if True: #new_restart_count <= current_restart_count
                     eprint('need to kill the pod to force it to restart...')
                     kill_pod(namespace, pod_name)

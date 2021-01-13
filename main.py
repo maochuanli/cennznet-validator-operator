@@ -251,6 +251,7 @@ def insert_key_gran(node_ip, key_type, node_session_key, node_key_public_key):
     }
     '''
     post_json_body = gran_request.format(key_type, node_session_key, node_key_public_key)
+    eprint(post_json_body)
     http_url = 'http://{}:9933'.format(node_ip)
     return http_post(http_url, post_json_body)
 

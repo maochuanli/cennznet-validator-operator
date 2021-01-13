@@ -237,7 +237,7 @@ def get_public_key_ed25519(key_str):
     rc, out = run_cmd(cmd)
     return get_public_key(out)
 
-def insert_key_gran(node_ip, key_type, node_session_key):
+def insert_key_gran(node_ip, key_type, node_session_key, node_key_public_key):
     gran_request = '''
     {
     "jsonrpc": "2.0",
@@ -250,17 +250,17 @@ def insert_key_gran(node_ip, key_type, node_session_key):
     "id": 0
     }
     '''
-    post_json_body = gran_request.format(node_session_key, key_type, node_session_key)
+    post_json_body = gran_request.format(key_type, node_session_key)
     http_url = 'http://{}:9933'.format(node_ip)
     return http_post(http_url, post_json_body)
 
 def insert_keys(node_ip, node_session_key):
     key_sr25519 = get_public_key_sr25519(node_session_key)
     key_ed25519 = get_public_key_ed25519(node_session_key)
-    rc = insert_key_gran(node_ip, 'audi', key_sr25519)
-    rc = insert_key_gran(node_ip, 'babe', key_sr25519)
-    rc = insert_key_gran(node_ip, 'imon', key_sr25519)
-    rc = insert_key_gran(node_ip, 'gran', key_ed25519)
+    rc = insert_key_gran(node_ip, 'audi', node_session_key, key_sr25519)
+    rc = insert_key_gran(node_ip, 'babe', node_session_key, key_sr25519)
+    rc = insert_key_gran(node_ip, 'imon', node_session_key, key_sr25519)
+    rc = insert_key_gran(node_ip, 'gran', node_session_key, key_ed25519)
 
 def remove_session_keys(namespace, pod_name):
     cmd = 'kubectl exec -n {} {} -- ls /mnt/cennznet/chains/CENNZnet\ {}\ V1/keystore/'.format(namespace, pod_name, CHAIN_NAME)

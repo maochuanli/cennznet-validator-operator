@@ -295,13 +295,13 @@ def loop_work():
         for record in CURRNET_SECRET_OBJ:
             namespace, pod_name = record['namespace'], record['pod_name']
             if record['state'] == 'staking' and record['healthy'] == False:
-                eprint('{}/{} is unhealthy, need to remove the session key from it....')
+                eprint('{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
                 remove_session_keys(namespace, pod_name)
                 time.sleep(5)
-                current_restart_count = int(record['restart_count'])
-                new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
-                eprint('current_restart_count {}, new_restart_count {}'.format(current_restart_count, new_restart_count))
-                if new_restart_count <= current_restart_count:
+                # current_restart_count = int(record['restart_count'])
+                # new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
+                # eprint('current_restart_count {}, new_restart_count {}'.format(current_restart_count, new_restart_count))
+                if True: #new_restart_count <= current_restart_count
                     eprint('need to kill the pod to force it to restart...')
                     kill_pod(namespace, pod_name)
                     new_restart_count = int(get_pod_restart_count(namespace, pod_name) )

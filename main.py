@@ -32,8 +32,12 @@ def run_cmd(cmd):
     return process.returncode, result_txt
 
 def http_get(url):
-    r = requests.get(url)
-    return r.text
+    try:
+        r = requests.get(url)
+        return r.text
+    except:
+        pass
+    return "URL Unavailable"
 
 def http_post(http_url, post_json_body):
     json_obj = convert_json_2_object(post_json_body)
@@ -224,12 +228,12 @@ def get_public_key(cmd_out):
     return None
 
 def get_public_key_sr25519(key_str):
-    cmd = 'subkey inspect "{}" --scheme=Sr25519'
+    cmd = 'subkey inspect "{}" --scheme=Sr25519'.format(key_str)
     rc, out = run_cmd(cmd)
     return get_public_key(out)
 
 def get_public_key_ed25519(key_str):
-    cmd = 'subkey inspect "{}" --scheme=Ed25519'
+    cmd = 'subkey inspect "{}" --scheme=Ed25519'.format(key_str)
     rc, out = run_cmd(cmd)
     return get_public_key(out)
 

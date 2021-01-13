@@ -244,31 +244,30 @@ def get_public_key_ed25519(key_str):
     rc, out = run_cmd(cmd)
     return get_public_key(out)
 
-def insert_key_gran(node_ip, key_type, node_session_key, node_key_public_key):
-    gran_request = '''
-    {{
-    "jsonrpc": "2.0",
-    "method": "author_insertKey",
-    "params": [
-      "{}",
-      "{}",
-      "{}"
-    ],
-    "id": 0
-    }}
-    '''
-    post_json_body = gran_request.format(key_type, node_session_key, node_key_public_key)
-    eprint(post_json_body)
-    http_url = 'http://{}:9933'.format(node_ip)
-    return http_post(http_url, post_json_body)
+def upload_subkey_to_pod(namespace, pod_name):
+    cmd = 'kubectl -n {} exec {} -- ls -l /subkey'.format(namespace, pod_name)
+    rc, out = run_cmd(cmd)
+    if '/subkey' not in out:
+        cmd = 'which subkey'
+        rc, out = run_cmd(cmd)
+        cmd = 'kubectl -n {} cp {} {}:/subkey'.format(namespace, out.strip(), pod_name)
+        rc, out = run_cmd(cmd)
+        cmd = 'kubectl -n {} exec {} -- chmod +x /subkey'.format(namespace, pod_name)
+        rc, out = run_cmd(cmd)
+        
+    
 
-def insert_keys(node_ip, node_session_key):
-    key_sr25519 = get_public_key_sr25519(node_session_key)
-    key_ed25519 = get_public_key_ed25519(node_session_key)
-    rc = insert_key_gran(node_ip, 'audi', node_session_key, key_sr25519)
-    rc = insert_key_gran(node_ip, 'babe', node_session_key, key_sr25519)
-    rc = insert_key_gran(node_ip, 'imon', node_session_key, key_sr25519)
-    rc = insert_key_gran(node_ip, 'gran', node_session_key, key_ed25519)
+def insert_key_gran(namespace, pod_name, key_type, node_session_key, keyscheme='Sr25519'):
+    upload_subkey_to_pod(namespace, pod_name)
+    cmd = 'kubectl -n {} exec {} -- /subkey insert --key-type {} --suri="{}" --scheme {} --base-path=/mnt/cennznet/chains/CENNZnet\ Azalea\ V1/'.format(namespace, pod_name, key_type, node_session_key,keyscheme)
+    rc, out = run_cmd(cmd)
+    return rc
+
+def insert_keys(namespace, pod_name, node_session_key):
+    rc = insert_key_gran(namespace, pod_name, 'audi', node_session_key)
+    rc = insert_key_gran(namespace, pod_name, 'babe', node_session_key)
+    rc = insert_key_gran(namespace, pod_name, 'imon', node_session_key)
+    rc = insert_key_gran(namespace, pod_name, 'gran', node_session_key, 'Ed25519')
 
 def remove_session_keys(namespace, pod_name):
     cmd = 'kubectl exec -n {} {} -- ls /mnt/cennznet/chains/CENNZnet\ {}\ V1/keystore/'.format(namespace, pod_name, CHAIN_NAME)
@@ -334,7 +333,7 @@ def loop_work():
                 session_key = healthy_record['session_key'] = record['session_key']
                 record['session_key'] = ""
                 namespace, pod_name, pod_ip = healthy_record['namespace'], healthy_record['pod_name'], healthy_record['pod_ip'], 
-                insert_keys(pod_ip, session_key)
+                insert_keys(namespace, pod_name, session_key)
                 need_save_secret = True
 
         if need_save_secret:

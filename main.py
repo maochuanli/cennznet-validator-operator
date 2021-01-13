@@ -191,7 +191,7 @@ def extract_pods_metrics():
         pod_ip = record['pod_ip']
         if not pod_ip:
             eprint('{}/{} pod ip {}, cannot extract metrics'.format(namespace, pod_name, pod_ip))
-            return
+            continue
         pod_metrics_url = 'http://{}:{}/metrics'.format(pod_ip, 9615)
         try:
             pod_metrics_txt = http_get(pod_metrics_url)

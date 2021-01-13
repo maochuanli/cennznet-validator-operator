@@ -139,6 +139,8 @@ def get_pod_restart_count(namespace, pod_name):
     try:
         json_obj = convert_json_2_object(out)
         restart_count = jmespath.search('status.containerStatuses[0].restartCount', json_obj)
+        if restart_count is None:
+            return "-2"
         return restart_count
     except Exception:
         eprint(traceback.format_exc())

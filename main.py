@@ -294,7 +294,7 @@ def loop_work():
 
         for record in CURRNET_SECRET_OBJ:
             namespace, pod_name = record['namespace'], record['pod_name']
-            if record['state'] == 'staking' and record['healthy'] == 'False':
+            if record['state'] == 'staking' and record['healthy'] == False:
                 eprint('{}/{} is unhealthy, need to remove the session key from it....')
                 remove_session_keys(namespace, pod_name)
                 time.sleep(5)
@@ -308,7 +308,7 @@ def loop_work():
                     record['restart_count'] = new_restart_count
                 record['state'] == 'suspension'
                 suspended_records.append(record)
-            elif record['state'] == 'idle' and record['healthy'] == 'True':
+            elif record['state'] == 'idle' and record['healthy'] == True:
                 idle_healthy_records.append(record)
         
         need_save_secret = False

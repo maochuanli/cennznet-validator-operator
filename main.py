@@ -136,7 +136,7 @@ def get_pod_ip_real(namespace, pod_name):
         return pod_ip
     except Exception:
         eprint(traceback.format_exc())
-        
+
 def get_pod_ip(namespace, pod_name):
     for i in range(10):
         pod_ip = get_pod_ip_real(namespace, pod_name)
@@ -246,7 +246,7 @@ def get_public_key_ed25519(key_str):
 
 def insert_key_gran(node_ip, key_type, node_session_key, node_key_public_key):
     gran_request = '''
-    {
+    {{
     "jsonrpc": "2.0",
     "method": "author_insertKey",
     "params": [
@@ -255,7 +255,7 @@ def insert_key_gran(node_ip, key_type, node_session_key, node_key_public_key):
       "{}"
     ],
     "id": 0
-    }
+    }}
     '''
     post_json_body = gran_request.format(key_type, node_session_key, node_key_public_key)
     eprint(post_json_body)

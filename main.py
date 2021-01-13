@@ -127,7 +127,7 @@ def convert_object_2_json(python_object):
     except Exception:
         eprint(traceback.format_exc())
 
-def get_pod_ip(namespace, pod_name):
+def get_pod_ip_real(namespace, pod_name):
     cmd = 'kubectl get pod {} -n {} -o json'.format(pod_name, namespace)
     rc, out = run_cmd(cmd)
     try:
@@ -136,6 +136,13 @@ def get_pod_ip(namespace, pod_name):
         return pod_ip
     except Exception:
         eprint(traceback.format_exc())
+        
+def get_pod_ip(namespace, pod_name):
+    for i in range(10):
+        pod_ip = get_pod_ip_real(namespace, pod_name)
+        if pod_ip:
+            return pod_ip
+        time.sleep(6)
 
 def get_pod_restart_count(namespace, pod_name):
     cmd = 'kubectl get pod {} -n {} -o json'.format(pod_name, namespace)

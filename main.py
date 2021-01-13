@@ -250,7 +250,7 @@ def insert_key_gran(node_ip, key_type, node_session_key, node_key_public_key):
     "id": 0
     }
     '''
-    post_json_body = gran_request.format(key_type, node_session_key)
+    post_json_body = gran_request.format(key_type, node_session_key, node_key_public_key)
     http_url = 'http://{}:9933'.format(node_ip)
     return http_post(http_url, post_json_body)
 
@@ -265,6 +265,9 @@ def insert_keys(node_ip, node_session_key):
 def remove_session_keys(namespace, pod_name):
     cmd = 'kubectl exec -n {} {} -- ls /mnt/cennznet/chains/CENNZnet\ {}\ V1/keystore/'.format(namespace, pod_name, CHAIN_NAME)
     rc, out = run_cmd(cmd)
+    if rc != 0:
+        eprint(rc, out)
+        return
     lines = out.strip().split('\n')
     for line in lines:
         if len(line.strip()) <= 0:

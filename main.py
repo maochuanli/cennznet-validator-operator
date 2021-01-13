@@ -160,8 +160,8 @@ def get_max_best_finalized_number():
     best, finalized = 0, 0
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         for record in CURRNET_SECRET_OBJ:
-            tmp_best = int(record.get('substrate_block_height_best', default=-3))
-            tmp_finalized = int(record.get('substrate_block_height_finalized', default=-3))
+            tmp_best = int(record.get('substrate_block_height_best', '-3'))
+            tmp_finalized = int(record.get('substrate_block_height_finalized', '-3'))
             if tmp_best > best:
                 best = tmp_best
             if tmp_finalized > finalized:
@@ -173,8 +173,8 @@ def get_max_best_finalized_number():
 def update_node_status(best, finalized):
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         for record in CURRNET_SECRET_OBJ:
-            tmp_best = int(record['substrate_block_height_best'])
-            tmp_finalized = int(record['substrate_block_height_finalized'])
+            tmp_best = int(record.get('substrate_block_height_best', '-4'))
+            tmp_finalized = int(record.get('substrate_block_height_finalized', '-4'))
             if (best - tmp_best) > 6 or (finalized - tmp_finalized) > 6:
                 record['healthy'] = False
             else:
@@ -187,9 +187,6 @@ def extract_pods_metrics():
         pod_ip = record['pod_ip']
         if not pod_ip:
             eprint('{}/{} pod ip {}, cannot extract metrics'.format(namespace, pod_name, pod_ip))
-            record['substrate_block_height_best'] = 0
-            record['substrate_block_height_finalized'] = 0
-            record['substrate_block_height_sync_target'] = 0
             return
         pod_metrics_url = 'http://{}:{}/metrics'.format(pod_ip, 9615)
         try:
@@ -199,16 +196,14 @@ def extract_pods_metrics():
 
             for line in lines:
                 if line.startswith('substrate_block_height{status="best"}'):
-                    record['substrate_block_height_best'] = int(line.split()[-1])
+                    record['substrate_block_height_best'] = line.split()[-1]
                 elif line.startswith('substrate_block_height{status="finalized"}'):
-                    record['substrate_block_height_finalized'] = int(line.split()[-1])
+                    record['substrate_block_height_finalized'] = line.split()[-1]
                 elif line.startswith('substrate_block_height{status="sync_target"}'):
-                    record['substrate_block_height_sync_target'] = int(line.split()[-1])
+                    record['substrate_block_height_sync_target'] = line.split()[-1]
+
         except Exception:
             eprint(traceback.format_exc())
-            record['substrate_block_height_best'] = 0
-            record['substrate_block_height_finalized'] = 0
-            record['substrate_block_height_sync_target'] = 0
 
 
 def show_data_frame():

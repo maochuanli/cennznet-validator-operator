@@ -417,6 +417,8 @@ def extract_chain_base_path():
             rc, out = run_cmd(cmd)
             base_path = os.path.join('/mnt/cennznet/chains/', out.strip())
             CHAIN_BASE_PATH = my_escape(base_path)
+            if len(CHAIN_BASE_PATH) > 0:
+                break
 
 
 def main():

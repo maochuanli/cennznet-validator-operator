@@ -308,20 +308,8 @@ def insert_keys(namespace, pod_name, node_session_key):
 
 
 def remove_session_keys(namespace, pod_name):
-    # cmd = 'kubectl exec -n {} {} -- ls {}/keystore/'.format(
-    #     namespace, pod_name, CHAIN_BASE_PATH)
-    # rc, out = run_cmd(cmd)
-    # if rc != 0:
-    #     eprint(rc, out)
-    #     return
-    # lines = out.strip().split('\n')
-    # for line in lines:
-    #     if len(line.strip()) <= 0:
-    #         continue
-    cmd = 'kubectl exec -n {} {} -- rm -rf {}/keystore'.format(namespace, pod_name, CHAIN_BASE_PATH)
-    rc, out = run_cmd(cmd)
-    return rc == 0
-
+    cmd = 'kubectl exec -n {} {} -- /bin/bash -c \'rm -f {}/keystore/*\''.format(namespace, pod_name, CHAIN_BASE_PATH)
+    return run_cmd(cmd)
 
 def kill_pod(namespace, pod_name):
     cmd = 'kubectl delete pod -n {} {}'.format(namespace, pod_name)

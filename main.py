@@ -332,7 +332,10 @@ def loop_work():
     global CURRNET_SECRET_OBJ
     global CURRNET_SECRET_OBJ_BACKUP
 
-    
+    secret_str = get_current_secret_as_str()
+    CURRNET_SECRET_OBJ = convert_json_2_object(secret_str)
+    CURRNET_SECRET_OBJ_BACKUP = convert_json_2_object(secret_str)
+
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         extract_pods_ips()
         extract_pods_metrics()
@@ -437,10 +440,12 @@ def main():
 
 
 if __name__ == '__main__':
+    global CURRNET_SECRET_OBJ
+    global CURRENT_NAMESPACE
+
     CURRENT_NAMESPACE = get_namespace_for_current_pod()
     secret_str = get_current_secret_as_str()
     CURRNET_SECRET_OBJ = convert_json_2_object(secret_str)
-    CURRNET_SECRET_OBJ_BACKUP = convert_json_2_object(secret_str)
     extract_chain_base_path()
     eprint(CURRNET_SECRET_OBJ)
     eprint(CHAIN_BASE_PATH)

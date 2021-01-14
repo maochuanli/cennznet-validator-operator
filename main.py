@@ -350,15 +350,20 @@ def loop_work():
             if record['state'] == 'staking' and record['healthy'] == False:
                 eprint(
                     '{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
+                if int(record.get('substrate_block_height_best', '-4')) <= 100:
+                    eprint('record might not be running properly, so we cannot properly remove the keys from it, skip it!!')
+                    eprint(record)
+                    continue
+                
                 remove_session_keys(namespace, pod_name)
                 time.sleep(5)
                 # current_restart_count = int(record['restart_count'])
-                new_restart_count = int(
-                    get_pod_restart_count(namespace, pod_name))
+                # new_restart_count = int(
+                #     get_pod_restart_count(namespace, pod_name))
                 # eprint('current_restart_count {}, new_restart_count {}'.format(current_restart_count, new_restart_count))
-                if True:  # new_restart_count <= current_restart_count
-                    eprint('need to kill the pod to force it to restart...')
-                    kill_pod(namespace, pod_name)
+                # if True:  # new_restart_count <= current_restart_count
+                eprint('need to kill the pod to force it to restart...')
+                kill_pod(namespace, pod_name)
                     # new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
                     # record['restart_count'] = new_restart_count
                 record['state'] == 'suspension'

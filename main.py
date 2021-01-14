@@ -10,15 +10,14 @@ import traceback
 import jmespath
 import requests
 import pandas as pd
-
+import re
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
 SECRET_FILE_NAME = '/tmp/secret.json'
 CURRNET_SECRET_OBJ = None
 CURRNET_SECRET_OBJ_BACKUP = None
-CHAIN_NAME = 'Azalea'
-
+CHAIN_BASE_PATH = None
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -281,7 +280,7 @@ def get_public_key_ed25519(key_str):
 def upload_subkey_to_pod(namespace, pod_name):
     cmd = 'kubectl -n {} exec {} -- ls -l /subkey'.format(namespace, pod_name)
     rc, out = run_cmd(cmd)
-    if '/subkey' not in out:
+    if 'No such file or directory' in out:
         cmd = 'which subkey'
         rc, out = run_cmd(cmd)
         cmd = 'kubectl -n {} cp {} {}:/subkey'.format(
@@ -294,8 +293,8 @@ def upload_subkey_to_pod(namespace, pod_name):
 
 def insert_key_gran(namespace, pod_name, key_type, node_session_key, keyscheme='Sr25519'):
     upload_subkey_to_pod(namespace, pod_name)
-    cmd = 'kubectl -n {} exec {} -- /subkey insert --key-type {} --suri="{}" --scheme {} --base-path=/mnt/cennznet/chains/CENNZnet\ Azalea\ V1/'.format(
-        namespace, pod_name, key_type, node_session_key, keyscheme)
+    cmd = 'kubectl -n {} exec {} -- /subkey insert --key-type {} --suri="{}" --scheme {} --base-path={}'.format(
+        namespace, pod_name, key_type, node_session_key, keyscheme, CHAIN_BASE_PATH)
     rc, out = run_cmd(cmd)
     return rc
 
@@ -309,8 +308,8 @@ def insert_keys(namespace, pod_name, node_session_key):
 
 
 def remove_session_keys(namespace, pod_name):
-    cmd = 'kubectl exec -n {} {} -- ls /mnt/cennznet/chains/CENNZnet\ {}\ V1/keystore/'.format(
-        namespace, pod_name, CHAIN_NAME)
+    cmd = 'kubectl exec -n {} {} -- ls {}/keystore/'.format(
+        namespace, pod_name, CHAIN_BASE_PATH)
     rc, out = run_cmd(cmd)
     if rc != 0:
         eprint(rc, out)
@@ -319,7 +318,7 @@ def remove_session_keys(namespace, pod_name):
     for line in lines:
         if len(line.strip()) <= 0:
             continue
-        cmd = 'kubectl exec -n {} {} -- rm -f /mnt/cennznet/chains/CENNZnet\ {}\ V1/keystore/{}'.format(namespace, pod_name, CHAIN_NAME,
+        cmd = 'kubectl exec -n {} {} -- rm -f {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH,
                                                                                                         line.strip())
         rc, out = run_cmd(cmd)
 
@@ -370,6 +369,9 @@ def loop_work():
         need_save_secret = False
 
         for record in suspended_records:
+            if len(idle_healthy_records) <=0:
+                eprint('no healthy idle validator to swap to!!!')
+                break
             healthy_record = idle_healthy_records.pop()
             if healthy_record:
                 record['state'] = 'idle'
@@ -387,9 +389,36 @@ def loop_work():
     CURRNET_SECRET_OBJ = None
 
 
+_to_esc = re.compile(r'\s|[]()[]')
+def _esc_char(match):
+    return '\\' + match.group(0)
+
+def my_escape(name):
+    return _to_esc.sub(_esc_char, name)
+
+def extract_chain_base_path():
+    global CHAIN_BASE_PATH
+    global CURRNET_SECRET_OBJ
+
+    if CHAIN_BASE_PATH:
+        return
+    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
+        for record in CURRNET_SECRET_OBJ:
+            namespace, pod_name = record['namespace'], record['pod_name']
+            cmd = 'kubectl -n {} exec {} -- ls /mnt/cennznet/chains/'.format(namespace, pod_name)
+            rc, out = run_cmd(cmd)
+            base_path = os.path.join('/mnt/cennznet/chains/', out.strip())
+            CHAIN_BASE_PATH = my_escape(base_path)
+
+
 def main():
     try:
         start_http_server(8080)
+        extract_chain_base_path()
+        eprint(CURRNET_SECRET_OBJ)
+        eprint(CHAIN_BASE_PATH)
+        time.sleep(10)
+
         while True:
             loop_work()
             time.sleep(60)

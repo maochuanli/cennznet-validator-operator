@@ -429,7 +429,9 @@ def main():
         start_http_server(8080)
         while True:
             loop_work()
+            eprint('------------------1-----------------')
             time.sleep(60)
+            eprint('-----------------2------------------')
     except Exception:
         eprint(traceback.format_exc())
 

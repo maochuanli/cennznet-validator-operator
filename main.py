@@ -34,6 +34,13 @@ def run_cmd(cmd):
         eprint('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt
 
+def run_cmd_until_ok(cmd, timeout=60)
+    for i in range(timeout/5):
+        rc, out = run_cmd(cmd)
+        if rc != 0:
+            time.sleep(5)
+        else:
+            return rc,out
 
 def http_get(url):
     try:
@@ -77,8 +84,6 @@ def backup_current_secret():
 
     with open(SECRET_FILE_NAME, 'w') as f:
         f.write(current_secret)
-    now_dt = datetime.datetime.now()
-    format = "%Y-%m-%d-%H%M"
     backup_secret_name = SECRET_NAME + '-backup'
 
     cmd = 'kubectl delete secret --ignore-not-found=true {} -n {}'.format(
@@ -257,62 +262,62 @@ def show_data_frame():
     eprint(df)
 
 
-def get_public_key(cmd_out):
-    lines = cmd_out.split('\n')
-    for line in lines:
-        if 'Public key' in line:
-            line_seg_list = line.split(':')
-            if len(line_seg_list) == 2:
-                return line_seg_list[-1].strip()
+# def get_public_key(cmd_out):
+#     lines = cmd_out.split('\n')
+#     for line in lines:
+#         if 'Public key' in line:
+#             line_seg_list = line.split(':')
+#             if len(line_seg_list) == 2:
+#                 return line_seg_list[-1].strip()
+#
+#     return None
+#
+#
+# def get_public_key_sr25519(key_str):
+#     cmd = 'subkey inspect "{}" --scheme=Sr25519'.format(key_str)
+#     rc, out = run_cmd(cmd)
+#     return get_public_key(out)
 
-    return None
 
-
-def get_public_key_sr25519(key_str):
-    cmd = 'subkey inspect "{}" --scheme=Sr25519'.format(key_str)
-    rc, out = run_cmd(cmd)
-    return get_public_key(out)
-
-
-def get_public_key_ed25519(key_str):
-    cmd = 'subkey inspect "{}" --scheme=Ed25519'.format(key_str)
-    rc, out = run_cmd(cmd)
-    return get_public_key(out)
+# def get_public_key_ed25519(key_str):
+#     cmd = 'subkey inspect "{}" --scheme=Ed25519'.format(key_str)
+#     rc, out = run_cmd(cmd)
+#     return get_public_key(out)
 
 
 def upload_subkey_to_pod(namespace, pod_name):
     cmd = 'kubectl -n {} exec {} -- ls -l /subkey'.format(namespace, pod_name)
     rc, out = run_cmd(cmd)
-    if 'No such file or directory' in out:
+    if 'No such file or directory' in out or rc != 0:
         cmd = 'which subkey'
         rc, out = run_cmd(cmd)
         cmd = 'kubectl -n {} cp {} {}:/subkey'.format(
             namespace, out.strip(), pod_name)
-        rc, out = run_cmd(cmd)
+        rc, out = run_cmd_until_ok(cmd)
         cmd = 'kubectl -n {} exec {} -- chmod +x /subkey'.format(
             namespace, pod_name)
-        rc, out = run_cmd(cmd)
+        rc, out = run_cmd_until_ok(cmd)
 
 
-def insert_key_gran(namespace, pod_name, key_type, node_session_key, keyscheme='Sr25519'):
+def insert_key_type(namespace, pod_name, key_type, node_session_key, keyscheme='Sr25519'):
     upload_subkey_to_pod(namespace, pod_name)
     cmd = 'kubectl -n {} exec {} -- /subkey insert --key-type {} --suri="{}" --scheme {} --base-path={}'.format(
         namespace, pod_name, key_type, node_session_key, keyscheme, CHAIN_BASE_PATH)
-    rc, out = run_cmd(cmd)
+    rc, out = run_cmd_until_ok(cmd)
     return rc
 
 
 def insert_keys(namespace, pod_name, node_session_key):
-    rc = insert_key_gran(namespace, pod_name, 'audi', node_session_key)
-    rc = insert_key_gran(namespace, pod_name, 'babe', node_session_key)
-    rc = insert_key_gran(namespace, pod_name, 'imon', node_session_key)
-    rc = insert_key_gran(namespace, pod_name, 'gran',
+    rc = insert_key_type(namespace, pod_name, 'audi', node_session_key)
+    rc = insert_key_type(namespace, pod_name, 'babe', node_session_key)
+    rc = insert_key_type(namespace, pod_name, 'imon', node_session_key)
+    rc = insert_key_type(namespace, pod_name, 'gran',
                          node_session_key, 'Ed25519')
 
 
 def remove_session_keys(namespace, pod_name):
     cmd = 'kubectl exec -n {} {} -- /bin/bash -c \'rm -f {}/keystore/*\''.format(namespace, pod_name, CHAIN_BASE_PATH)
-    return run_cmd(cmd)
+    return run_cmd_until_ok(cmd)
 
 def kill_pod(namespace, pod_name):
     cmd = 'kubectl delete pod -n {} {}'.format(namespace, pod_name)
@@ -423,9 +428,10 @@ def main():
         start_http_server(8080)
         while True:
             loop_work()
-            eprint('------------------1-----------------')
+            now_dt = datetime.datetime.now()
+            format = "%Y-%m-%d %H:%M:%S"
+            eprint('-----------------{}------------------'.format(now_dt.strftime(format)))
             time.sleep(60)
-            eprint('-----------------2------------------')
     except Exception:
         eprint(traceback.format_exc())
 

@@ -372,11 +372,14 @@ def loop_work():
                 idle_healthy_records.append(record)
 
         need_save_secret = False
+        if len(suspended_records) > 0:
+            need_save_secret = True
 
         for record in suspended_records:
             if len(idle_healthy_records) <=0:
                 eprint('no healthy idle validator to swap to!!!')
                 break
+            
             healthy_record = idle_healthy_records.pop()
             if healthy_record:
                 record['state'] = 'idle'
@@ -386,7 +389,7 @@ def loop_work():
                 namespace, pod_name, pod_ip = healthy_record[
                     'namespace'], healthy_record['pod_name'], healthy_record['pod_ip'],
                 insert_keys(namespace, pod_name, session_key)
-                need_save_secret = True
+                
 
         if need_save_secret:
             create_update_operator_secret(CURRNET_SECRET_OBJ)

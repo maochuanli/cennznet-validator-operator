@@ -260,7 +260,7 @@ def show_data_frame():
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
     df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=[
-                      'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized', 'state', 'healthy', 'restart_count'])
+                      'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized', 'substrate_block_height_sync_target', 'state', 'healthy', 'restart_count'])
     eprint(df)
 
 

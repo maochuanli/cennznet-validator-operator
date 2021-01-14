@@ -195,7 +195,7 @@ def extract_pods_ips():
         pod_ip = get_pod_ip(namespace, pod_name)
         record['pod_ip'] = pod_ip
         record['restart_count'] = get_pod_restart_count(namespace, pod_name)
-        eprint(namespace, pod_name, pod_ip)
+        # eprint(namespace, pod_name, pod_ip)
 
 
 def get_max_best_finalized_number():

@@ -51,15 +51,15 @@ def http_get(url):
     return "URL Unavailable"
 
 
-def http_post(http_url, post_json_body):
-    json_obj = convert_json_2_object(post_json_body)
-    response = requests.post(http_url, json=json_obj, headers={
-                             'Content-Type': 'application/json'})
-    if response.status_code == 200:
-        return True
-    else:
-        eprint(response)
-    return False
+# def http_post(http_url, post_json_body):
+#     json_obj = convert_json_2_object(post_json_body)
+#     response = requests.post(http_url, json=json_obj, headers={
+#                              'Content-Type': 'application/json'})
+#     if response.status_code == 200:
+#         return True
+#     else:
+#         eprint(response)
+#     return False
 
 
 def get_current_secret_as_str():

@@ -34,7 +34,7 @@ def run_cmd(cmd):
         eprint('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt
 
-def run_cmd_until_ok(cmd, timeout=60)
+def run_cmd_until_ok(cmd, timeout=60):
     for i in range(timeout/5):
         rc, out = run_cmd(cmd)
         if rc != 0:

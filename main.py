@@ -446,5 +446,8 @@ if __name__ == '__main__':
     eprint(CURRNET_SECRET_OBJ)
     eprint(CHAIN_BASE_PATH)
     time.sleep(10)
-    main()
+    try:
+        main()
+    except Exception:
+        eprint(traceback.format_exc())
 

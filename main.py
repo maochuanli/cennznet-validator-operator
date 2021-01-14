@@ -199,27 +199,31 @@ def extract_pods_ips():
 
 
 def get_max_best_finalized_number():
-    best, finalized = 0, 0
+    best, finalized, sync_target = 0, 0, 0
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         for record in CURRNET_SECRET_OBJ:
             tmp_best = int(record.get('substrate_block_height_best', '-3'))
             tmp_finalized = int(record.get(
                 'substrate_block_height_finalized', '-3'))
+            tmp_sync_target = int(record.get('substrate_block_height_sync_target', '-3'))
             if tmp_best > best:
                 best = tmp_best
             if tmp_finalized > finalized:
                 finalized = tmp_finalized
+            if tmp_sync_target > sync_target:
+                sync_target = tmp_sync_target
 
-    return best, finalized
+    return best, finalized, tmp_sync_target
 
 
-def update_node_status(best, finalized):
+def update_node_status(best, finalized, sync_target):
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         for record in CURRNET_SECRET_OBJ:
             tmp_best = int(record.get('substrate_block_height_best', '-4'))
             tmp_finalized = int(record.get(
                 'substrate_block_height_finalized', '-4'))
-            if (best - tmp_best) > 6 or (finalized - tmp_finalized) > 6:
+            tmp_sync_target = int(record.get('substrate_block_height_sync_target', '-4'))
+            if (best - tmp_best) > 6 or (finalized - tmp_finalized) > 6 or (sync_target - tmp_best) > 6:
                 record['healthy'] = False
             else:
                 record['healthy'] = True
@@ -337,8 +341,8 @@ def loop_work():
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         extract_pods_ips()
         extract_pods_metrics()
-        best, finalized = get_max_best_finalized_number()
-        update_node_status(best, finalized)
+        best, finalized, sync_target = get_max_best_finalized_number()
+        update_node_status(best, finalized, sync_target)
         show_data_frame()
 
         suspended_records = []

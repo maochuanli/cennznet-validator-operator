@@ -440,9 +440,6 @@ def main():
 
 
 if __name__ == '__main__':
-    global CURRNET_SECRET_OBJ
-    global CURRENT_NAMESPACE
-
     CURRENT_NAMESPACE = get_namespace_for_current_pod()
     secret_str = get_current_secret_as_str()
     CURRNET_SECRET_OBJ = convert_json_2_object(secret_str)

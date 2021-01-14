@@ -222,7 +222,7 @@ def update_node_status(best, finalized, sync_target):
             tmp_best = int(record.get('substrate_block_height_best', '-4'))
             tmp_finalized = int(record.get(
                 'substrate_block_height_finalized', '-4'))
-            tmp_sync_target = int(record.get('substrate_block_height_sync_target', '-4'))
+            # tmp_sync_target = int(record.get('substrate_block_height_sync_target', '-4'))
             if (best - tmp_best) > 6 or (finalized - tmp_finalized) > 6 or (sync_target - tmp_best) > 6:
                 record['healthy'] = False
             else:

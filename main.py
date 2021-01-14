@@ -415,6 +415,9 @@ def extract_chain_base_path():
             namespace, pod_name = record['namespace'], record['pod_name']
             cmd = 'kubectl -n {} exec {} -- ls /mnt/cennznet/chains/'.format(namespace, pod_name)
             rc, out = run_cmd(cmd)
+            if rc != 0:
+                eprint(out)
+                continue
             base_path = os.path.join('/mnt/cennznet/chains/', out.strip())
             CHAIN_BASE_PATH = my_escape(base_path)
             if len(CHAIN_BASE_PATH) > 0:

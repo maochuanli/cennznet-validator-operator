@@ -154,6 +154,8 @@ def convert_object_2_json(python_object):
 def get_pod_ip_real(namespace, pod_name):
     cmd = 'kubectl get pod {} -n {} -o json'.format(pod_name, namespace)
     rc, out = run_cmd(cmd)
+    if rc != 0:
+        return None
     try:
         json_obj = convert_json_2_object(out)
         pod_ip = jmespath.search('status.podIP', json_obj)

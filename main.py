@@ -433,10 +433,10 @@ def main():
     try:
         start_http_server(8080)
         while True:
-            loop_work()
             now_dt = datetime.datetime.now()
             format = "%Y-%m-%d %H:%M:%S"
             eprint('-----------------{}------------------'.format(now_dt.strftime(format)))
+            loop_work()
             time.sleep(60)
     except Exception:
         eprint(traceback.format_exc())

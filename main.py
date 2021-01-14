@@ -308,19 +308,19 @@ def insert_keys(namespace, pod_name, node_session_key):
 
 
 def remove_session_keys(namespace, pod_name):
-    cmd = 'kubectl exec -n {} {} -- ls {}/keystore/'.format(
-        namespace, pod_name, CHAIN_BASE_PATH)
+    # cmd = 'kubectl exec -n {} {} -- ls {}/keystore/'.format(
+    #     namespace, pod_name, CHAIN_BASE_PATH)
+    # rc, out = run_cmd(cmd)
+    # if rc != 0:
+    #     eprint(rc, out)
+    #     return
+    # lines = out.strip().split('\n')
+    # for line in lines:
+    #     if len(line.strip()) <= 0:
+    #         continue
+    cmd = 'kubectl exec -n {} {} -- rm -rf {}/keystore'.format(namespace, pod_name, CHAIN_BASE_PATH)
     rc, out = run_cmd(cmd)
-    if rc != 0:
-        eprint(rc, out)
-        return
-    lines = out.strip().split('\n')
-    for line in lines:
-        if len(line.strip()) <= 0:
-            continue
-        cmd = 'kubectl exec -n {} {} -- rm -f {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH,
-                                                                                                        line.strip())
-        rc, out = run_cmd(cmd)
+    return rc == 0
 
 
 def kill_pod(namespace, pod_name):
@@ -332,9 +332,7 @@ def loop_work():
     global CURRNET_SECRET_OBJ
     global CURRNET_SECRET_OBJ_BACKUP
 
-    secret_str = get_current_secret_as_str()
-    CURRNET_SECRET_OBJ = convert_json_2_object(secret_str)
-    CURRNET_SECRET_OBJ_BACKUP = convert_json_2_object(secret_str)
+    
     if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
         extract_pods_ips()
         extract_pods_metrics()
@@ -355,17 +353,16 @@ def loop_work():
                     eprint(record)
                     continue
                 
-                remove_session_keys(namespace, pod_name)
+                rc, out = remove_session_keys(namespace, pod_name)
+                if rc != 0:
+                    eprint('failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace, pod_name))
+                    continue
                 time.sleep(5)
-                # current_restart_count = int(record['restart_count'])
-                # new_restart_count = int(
-                #     get_pod_restart_count(namespace, pod_name))
-                # eprint('current_restart_count {}, new_restart_count {}'.format(current_restart_count, new_restart_count))
-                # if True:  # new_restart_count <= current_restart_count
+                
                 eprint('need to kill the pod to force it to restart...')
                 kill_pod(namespace, pod_name)
-                    # new_restart_count = int(get_pod_restart_count(namespace, pod_name) )
-                    # record['restart_count'] = new_restart_count
+                # make sure there is no key files left
+
                 record['state'] == 'suspension'
                 suspended_records.append(record)
             elif record['state'] == 'idle' and record['healthy'] == True:
@@ -419,11 +416,6 @@ def extract_chain_base_path():
 def main():
     try:
         start_http_server(8080)
-        extract_chain_base_path()
-        eprint(CURRNET_SECRET_OBJ)
-        eprint(CHAIN_BASE_PATH)
-        time.sleep(10)
-
         while True:
             loop_work()
             time.sleep(60)
@@ -433,4 +425,11 @@ def main():
 
 if __name__ == '__main__':
     CURRENT_NAMESPACE = get_namespace_for_current_pod()
+    secret_str = get_current_secret_as_str()
+    CURRNET_SECRET_OBJ = convert_json_2_object(secret_str)
+    CURRNET_SECRET_OBJ_BACKUP = convert_json_2_object(secret_str)
+    extract_chain_base_path()
+    eprint(CURRNET_SECRET_OBJ)
+    eprint(CHAIN_BASE_PATH)
+    time.sleep(10)
     main()

@@ -35,7 +35,7 @@ def run_cmd(cmd):
     return process.returncode, result_txt
 
 def run_cmd_until_ok(cmd, timeout=60):
-    for i in range(timeout/5):
+    for i in range( int(timeout/5) ):
         rc, out = run_cmd(cmd)
         if rc != 0:
             time.sleep(5)

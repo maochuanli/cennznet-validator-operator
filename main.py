@@ -344,6 +344,9 @@ def loop_work():
         idle_healthy_records = []
 
         for record in CURRNET_SECRET_OBJ:
+            if record['state'] == 'suspension':
+                suspended_records.append(record)
+                continue
             namespace, pod_name = record['namespace'], record['pod_name']
             if record['state'] == 'staking' and record['healthy'] == False:
                 eprint(
@@ -363,7 +366,7 @@ def loop_work():
                 kill_pod(namespace, pod_name)
                 # make sure there is no key files left
 
-                record['state'] == 'suspension'
+                record['state'] = 'suspension'
                 suspended_records.append(record)
             elif record['state'] == 'idle' and record['healthy'] == True:
                 idle_healthy_records.append(record)

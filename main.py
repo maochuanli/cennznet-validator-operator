@@ -223,6 +223,9 @@ def extract_pods_metrics():
         namespace = record['namespace']
         pod_name = record['pod_name']
         pod_ip = record['pod_ip']
+        record['substrate_block_height_best'] = '-5'
+        record['substrate_block_height_finalized'] = '-5'
+        record['substrate_block_height_sync_target'] = '-5'
         if not pod_ip:
             eprint(
                 '{}/{} pod ip {}, cannot extract metrics'.format(namespace, pod_name, pod_ip))

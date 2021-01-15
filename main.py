@@ -405,8 +405,8 @@ def loop_work():
                 insert_keys(namespace, pod_name, session_key)
                 
         # verify the current setup
-        verify_session_keys_on_nodes() 
-        if need_save_secret:
+        wrong = verify_session_keys_on_nodes() 
+        if need_save_secret or wrong:
             create_update_operator_secret(CURRNET_SECRET_OBJ)
 
     # reset secret obj
@@ -454,7 +454,7 @@ def verify_session_keys_on_nodes():
                 continue
             lines = out.split('\n')
             if len(lines) != 0 or len(lines) != 4:
-                eprint('session keys files not complete {}/{}'.format(namespace, pod_name))
+                eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
                 eprint(out)
                 record['tainted'] = True
                 continue
@@ -472,7 +472,7 @@ def verify_session_keys_on_nodes():
                     record['tainted'] = True
                 else:
                     eprint('session key properly set up for {}/{}'.format(namespace, pod_name))
-
+    return any_wrong
 
 def main():
     try:

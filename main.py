@@ -352,7 +352,7 @@ def loop_work():
 
         for record in CURRNET_SECRET_OBJ:
             if record.get('tainted'):
-                eprint('cannot continue to process, record {}/{} is tainted!'.format(record))
+                eprint('cannot continue to process, record is tainted! \n {}'.format(record))
                 sys.exit(-200)
 
         for record in CURRNET_SECRET_OBJ:

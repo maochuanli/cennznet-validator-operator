@@ -401,6 +401,8 @@ def loop_work():
 
         if need_save_secret:
             create_update_operator_secret(CURRNET_SECRET_OBJ)
+    # verify the current setup
+    verify_session_keys_on_nodes()
     # reset secret obj
     CURRNET_SECRET_OBJ = None
 
@@ -431,6 +433,41 @@ def extract_chain_base_path():
             if len(CHAIN_BASE_PATH) > 0:
                 break
 
+def verify_session_keys_on_nodes():
+    any_wrong = False
+    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
+        for record in CURRNET_SECRET_OBJ:
+            namespace, pod_name, pod_ip, session_key = record['namespace'], record['pod_name'], record['pod_ip'], record['session_key']
+            if pod_ip is None:
+                eprint('{}/{} is not running!'.format(namespace, pod_name))
+                continue
+            cmd = 'kubectl -n {} exec {} -- ls {}/keystore/'.format(namespace, pod_name, CHAIN_BASE_PATH)
+            rc, out = run_cmd_until_ok(cmd)
+            if rc != 0:
+                eprint('failed to list session key files for {}/{}'.format(namespace, pod_name))
+                continue
+            lines = out.split('\n')
+            if len(lines) != 0 or len(lines) != 4:
+                eprint('session keys files not complete {}/{}'.format(namespace, pod_name))
+                eprint(out)
+                any_wrong = True
+                continue
+            if len(lines) == 0:
+                eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))
+                if len(session_key) > 0 and record['state'] == 'staking':
+                    eprint('node {}/{} is supposed to stake, but session key is not inserted.')
+                    any_wrong = True
+                continue
+            elif len(lines) == 4:
+                cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH, lines[0])
+                rc, out = run_cmd_until_ok(cmd)
+                if session_key not in out:
+                    eprint('session key mismatch between record in secret and the key file on node!!!{}/{}'.format(namespace, pod_name))
+                else:
+                    eprint('session key properly set up for {}/{}'.format(namespace, pod_name))
+    if any_wrong:
+        eprint('something wrong, quit the operator!!!')
+        sys.exit(-200)
 
 def main():
     try:

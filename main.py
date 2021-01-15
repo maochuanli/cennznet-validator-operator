@@ -40,7 +40,9 @@ def run_cmd_until_ok(cmd, timeout=60):
         if rc != 0:
             time.sleep(5)
         else:
-            return rc,out
+            return rc, out
+    
+    return -1, None
 
 def http_get(url):
     try:

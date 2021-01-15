@@ -327,7 +327,7 @@ def remove_session_keys(namespace, pod_name):
 
 def kill_pod(namespace, pod_name):
     cmd = 'kubectl delete pod -n {} {}'.format(namespace, pod_name)
-    rc, out = run_cmd(cmd)
+    rc, out = run_cmd_until_ok(cmd)
 
 
 def loop_work():
@@ -361,15 +361,16 @@ def loop_work():
                 #     eprint(record)
                 #     continue
                 
+                # make sure there is no key files left
                 rc, out = remove_session_keys(namespace, pod_name)
                 if rc != 0:
                     eprint('failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace, pod_name))
                     continue
                 time.sleep(5)
                 
-                eprint('need to kill the pod to force it to restart...')
+                eprint('need to kill the pod to force it to restart...{}/{}'.format(namespace, pod_name))
                 kill_pod(namespace, pod_name)
-                # make sure there is no key files left
+                
 
                 record['state'] = 'suspension'
                 suspended_records.append(record)

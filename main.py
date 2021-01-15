@@ -452,7 +452,7 @@ def verify_session_keys_on_nodes():
             if rc != 0:
                 eprint('failed to list session key files for {}/{}'.format(namespace, pod_name))
                 continue
-            lines = out.split('\n')
+            lines = out.strip().split('\n')
             if len(lines) != 0 or len(lines) != 4:
                 eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
                 eprint(out)

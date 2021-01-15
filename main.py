@@ -355,6 +355,7 @@ def loop_work():
                 eprint('cannot continue to process, record is tainted! \n {}'.format(record))
                 sys.exit(-200)
 
+
         for record in CURRNET_SECRET_OBJ:
             if record['state'] == 'suspension':
                 suspended_records.append(record)
@@ -459,8 +460,8 @@ def verify_session_keys_on_nodes():
                 continue
             if len(lines) == 0:
                 eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))
-                if len(session_key) > 0 and record['state'] == 'staking':
-                    eprint('node {}/{} is supposed to stake, but session key is not inserted.')
+                if len(session_key) > 0 and record['state'] != 'suspension':
+                    eprint('node {}/{} is supposed to stake/suspend, but session key is not inserted/removed.')
                     record['tainted'] = True
                 continue
             elif len(lines) == 4:

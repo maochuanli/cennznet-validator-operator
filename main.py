@@ -472,7 +472,7 @@ def verify_session_keys_on_nodes():
                     any_wrong = True
                 continue
             elif file_count == 4:
-                cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH, lines[0])
+                cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH, lines[2])
                 rc, out = run_cmd_until_ok(cmd)
                 if session_key not in out:
                     eprint('session key mismatch between record in secret and the key file on node!!!{}/{}'.format(namespace, pod_name))

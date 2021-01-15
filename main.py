@@ -351,7 +351,7 @@ def loop_work():
         idle_healthy_records = []
 
         for record in CURRNET_SECRET_OBJ:
-            if record.get('tainted')
+            if record.get('tainted'):
                 eprint('cannot continue to process, record {}/{} is tainted!'.format(record))
                 sys.exit(-200)
 

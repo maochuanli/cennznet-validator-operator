@@ -266,7 +266,7 @@ def show_data_frame():
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
     df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=[
-                      'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized', 'substrate_block_height_sync_target', 'state', 'healthy', 'restart_count'])
+                      'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized', 'substrate_block_height_sync_target', 'state', 'healthy', 'tainted'])
     eprint(df)
 
 
@@ -351,6 +351,11 @@ def loop_work():
         idle_healthy_records = []
 
         for record in CURRNET_SECRET_OBJ:
+            if record.get('tainted')
+                eprint('cannot continue to process, record {}/{} is tainted!'.format(record))
+                sys.exit(-200)
+
+        for record in CURRNET_SECRET_OBJ:
             if record['state'] == 'suspension':
                 suspended_records.append(record)
                 continue
@@ -398,11 +403,11 @@ def loop_work():
                     'namespace'], healthy_record['pod_name'], healthy_record['pod_ip'],
                 insert_keys(namespace, pod_name, session_key)
                 
-
+        # verify the current setup
+        verify_session_keys_on_nodes() 
         if need_save_secret:
             create_update_operator_secret(CURRNET_SECRET_OBJ)
-    # verify the current setup
-    verify_session_keys_on_nodes()
+
     # reset secret obj
     CURRNET_SECRET_OBJ = None
 
@@ -450,24 +455,23 @@ def verify_session_keys_on_nodes():
             if len(lines) != 0 or len(lines) != 4:
                 eprint('session keys files not complete {}/{}'.format(namespace, pod_name))
                 eprint(out)
-                any_wrong = True
+                record['tainted'] = True
                 continue
             if len(lines) == 0:
                 eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))
                 if len(session_key) > 0 and record['state'] == 'staking':
                     eprint('node {}/{} is supposed to stake, but session key is not inserted.')
-                    any_wrong = True
+                    record['tainted'] = True
                 continue
             elif len(lines) == 4:
                 cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH, lines[0])
                 rc, out = run_cmd_until_ok(cmd)
                 if session_key not in out:
                     eprint('session key mismatch between record in secret and the key file on node!!!{}/{}'.format(namespace, pod_name))
+                    record['tainted'] = True
                 else:
                     eprint('session key properly set up for {}/{}'.format(namespace, pod_name))
-    if any_wrong:
-        eprint('something wrong, quit the operator!!!')
-        sys.exit(-200)
+
 
 def main():
     try:

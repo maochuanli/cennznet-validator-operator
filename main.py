@@ -453,20 +453,25 @@ def verify_session_keys_on_nodes():
                 eprint('failed to list session key files for {}/{}'.format(namespace, pod_name))
                 continue
             lines = out.strip().split('\n')
-            if not (len(lines) == 0 or len(lines) == 4):
+            file_count = 0
+            for line in lines:
+                if len(line.strip()) > 0:
+                    file_count += 0
+
+            if not (file_count == 0 or file_count == 4):
                 eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
                 eprint(out)
                 record['tainted'] = True
                 any_wrong = True
                 continue
-            if len(lines) == 0:
+            if file_count == 0:
                 eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))
                 if len(session_key) > 0 and record['state'] != 'suspension':
                     eprint('node {}/{} is supposed to stake/suspend, but session key is not inserted/removed.')
                     record['tainted'] = True
                     any_wrong = True
                 continue
-            elif len(lines) == 4:
+            elif file_count == 4:
                 cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH, lines[0])
                 rc, out = run_cmd_until_ok(cmd)
                 if session_key not in out:

@@ -452,6 +452,9 @@ if __name__ == '__main__':
     extract_chain_base_path()
     eprint(CURRNET_SECRET_OBJ)
     eprint(CHAIN_BASE_PATH)
+    if CHAIN_BASE_PATH is None:
+        eprint('cannot find the chain base path, exit!!!')
+        sys.exit(-100)
     time.sleep(10)
     try:
         main()

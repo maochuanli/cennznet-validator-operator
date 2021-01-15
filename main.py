@@ -356,10 +356,10 @@ def loop_work():
             if record['state'] == 'staking' and record['healthy'] == False:
                 eprint(
                     '{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
-                if int(record.get('substrate_block_height_best', '-4')) <= 100:
-                    eprint('record might not be running properly, so we cannot properly remove the keys from it, skip it!!')
-                    eprint(record)
-                    continue
+                # if int(record.get('substrate_block_height_best', '-4')) <= 100:
+                #     eprint('record might not be running properly, so we cannot properly remove the keys from it, skip it!!')
+                #     eprint(record)
+                #     continue
                 
                 rc, out = remove_session_keys(namespace, pod_name)
                 if rc != 0:

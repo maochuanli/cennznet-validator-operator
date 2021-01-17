@@ -340,9 +340,9 @@ def loop_work():
     global CURRENT_SECRET_OBJ
     global CURRENT_SECRET_OBJ_BACKUP
 
-    secret_str = get_current_secret_as_str()
-    CURRENT_SECRET_OBJ = convert_json_2_object(secret_str)
-    CURRENT_SECRET_OBJ_BACKUP = convert_json_2_object(secret_str)
+    secret_string = get_current_secret_as_str()
+    CURRENT_SECRET_OBJ = convert_json_2_object(secret_string)
+    CURRENT_SECRET_OBJ_BACKUP = convert_json_2_object(secret_string)
 
     if CURRENT_SECRET_OBJ and len(CURRENT_SECRET_OBJ) > 0:
         extract_pods_ips()
@@ -353,6 +353,9 @@ def loop_work():
 
         suspended_records = []
         idle_healthy_records = []
+
+        # verify the current setup
+        verify_session_keys_on_nodes()
 
         for record in CURRENT_SECRET_OBJ:
             if record.get('tainted'):
@@ -407,9 +410,7 @@ def loop_work():
                                                   'namespace'], healthy_record['pod_name'], healthy_record['pod_ip'],
                 insert_keys(namespace, pod_name, session_key)
 
-        # verify the current setup
-        wrong = verify_session_keys_on_nodes()
-        if need_save_secret or wrong:
+        if need_save_secret is True:
             create_update_operator_secret(CURRENT_SECRET_OBJ)
 
     # reset secret obj

@@ -15,9 +15,10 @@ import re
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
 SECRET_FILE_NAME = '/tmp/secret.json'
-CURRNET_SECRET_OBJ = None
-CURRNET_SECRET_OBJ_BACKUP = None
+CURRENT_SECRET_OBJ = None
+CURRENT_SECRET_OBJ_BACKUP = None
 CHAIN_BASE_PATH = None
+
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -34,15 +35,17 @@ def run_cmd(cmd):
         eprint('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt
 
+
 def run_cmd_until_ok(cmd, timeout=60):
-    for i in range( int(timeout/5) ):
+    for i in range(int(timeout / 5)):
         rc, out = run_cmd(cmd)
         if rc != 0:
             time.sleep(5)
         else:
             return rc, out
-    
+
     return -1, None
+
 
 def http_get(url):
     try:
@@ -78,11 +81,11 @@ def get_current_secret_as_str():
 
 
 def backup_current_secret():
-    if not CURRNET_SECRET_OBJ_BACKUP:
+    if not CURRENT_SECRET_OBJ_BACKUP:
         eprint('no secret at present!')
         return True
 
-    current_secret = convert_object_2_json(CURRNET_SECRET_OBJ_BACKUP)
+    current_secret = convert_object_2_json(CURRENT_SECRET_OBJ_BACKUP)
 
     with open(SECRET_FILE_NAME, 'w') as f:
         f.write(current_secret)
@@ -190,7 +193,7 @@ def get_pod_restart_count(namespace, pod_name):
 
 
 def extract_pods_ips():
-    for record in CURRNET_SECRET_OBJ:
+    for record in CURRENT_SECRET_OBJ:
         namespace = record['namespace']
         pod_name = record['pod_name']
 
@@ -202,8 +205,8 @@ def extract_pods_ips():
 
 def get_max_best_finalized_number():
     best, finalized, sync_target = 0, 0, 0
-    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
-        for record in CURRNET_SECRET_OBJ:
+    if CURRENT_SECRET_OBJ and len(CURRENT_SECRET_OBJ) > 0:
+        for record in CURRENT_SECRET_OBJ:
             tmp_best = int(record.get('substrate_block_height_best', '-3'))
             tmp_finalized = int(record.get(
                 'substrate_block_height_finalized', '-3'))
@@ -219,8 +222,8 @@ def get_max_best_finalized_number():
 
 
 def update_node_status(best, finalized, sync_target):
-    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
-        for record in CURRNET_SECRET_OBJ:
+    if CURRENT_SECRET_OBJ and len(CURRENT_SECRET_OBJ) > 0:
+        for record in CURRENT_SECRET_OBJ:
             tmp_best = int(record.get('substrate_block_height_best', '-4'))
             tmp_finalized = int(record.get(
                 'substrate_block_height_finalized', '-4'))
@@ -232,7 +235,7 @@ def update_node_status(best, finalized, sync_target):
 
 
 def extract_pods_metrics():
-    for record in CURRNET_SECRET_OBJ:
+    for record in CURRENT_SECRET_OBJ:
         namespace = record['namespace']
         pod_name = record['pod_name']
         pod_ip = record['pod_ip']
@@ -265,8 +268,9 @@ def show_data_frame():
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
-    df = pd.DataFrame(CURRNET_SECRET_OBJ, columns=[
-                      'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized', 'substrate_block_height_sync_target', 'state', 'healthy', 'tainted'])
+    df = pd.DataFrame(CURRENT_SECRET_OBJ, columns=[
+        'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized',
+        'substrate_block_height_sync_target', 'state', 'healthy', 'tainted'])
     eprint(df)
 
 
@@ -319,13 +323,13 @@ def insert_keys(namespace, pod_name, node_session_key):
     rc = insert_key_type(namespace, pod_name, 'audi', node_session_key)
     rc = insert_key_type(namespace, pod_name, 'babe', node_session_key)
     rc = insert_key_type(namespace, pod_name, 'imon', node_session_key)
-    rc = insert_key_type(namespace, pod_name, 'gran',
-                         node_session_key, 'Ed25519')
+    rc = insert_key_type(namespace, pod_name, 'gran', node_session_key, 'Ed25519')
 
 
 def remove_session_keys(namespace, pod_name):
     cmd = 'kubectl exec -n {} {} -- /bin/bash -c \'rm -f {}/keystore/*\''.format(namespace, pod_name, CHAIN_BASE_PATH)
     return run_cmd_until_ok(cmd)
+
 
 def kill_pod(namespace, pod_name):
     cmd = 'kubectl delete pod -n {} {}'.format(namespace, pod_name)
@@ -333,14 +337,14 @@ def kill_pod(namespace, pod_name):
 
 
 def loop_work():
-    global CURRNET_SECRET_OBJ
-    global CURRNET_SECRET_OBJ_BACKUP
+    global CURRENT_SECRET_OBJ
+    global CURRENT_SECRET_OBJ_BACKUP
 
     secret_str = get_current_secret_as_str()
-    CURRNET_SECRET_OBJ = convert_json_2_object(secret_str)
-    CURRNET_SECRET_OBJ_BACKUP = convert_json_2_object(secret_str)
+    CURRENT_SECRET_OBJ = convert_json_2_object(secret_str)
+    CURRENT_SECRET_OBJ_BACKUP = convert_json_2_object(secret_str)
 
-    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
+    if CURRENT_SECRET_OBJ and len(CURRENT_SECRET_OBJ) > 0:
         extract_pods_ips()
         extract_pods_metrics()
         best, finalized, sync_target = get_max_best_finalized_number()
@@ -350,35 +354,34 @@ def loop_work():
         suspended_records = []
         idle_healthy_records = []
 
-        for record in CURRNET_SECRET_OBJ:
+        for record in CURRENT_SECRET_OBJ:
             if record.get('tainted'):
                 eprint('cannot continue to process, record is tainted! \n {}'.format(record))
-                sys.exit(-200)
+                return
 
-
-        for record in CURRNET_SECRET_OBJ:
+        for record in CURRENT_SECRET_OBJ:
             if record['state'] == 'suspension':
                 suspended_records.append(record)
                 continue
             namespace, pod_name = record['namespace'], record['pod_name']
-            if record['state'] == 'staking' and record['healthy'] == False:
+            if record['state'] == 'staking' and record['healthy'] is False:
                 eprint(
                     '{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
                 # if int(record.get('substrate_block_height_best', '-4')) <= 100:
                 #     eprint('record might not be running properly, so we cannot properly remove the keys from it, skip it!!')
                 #     eprint(record)
                 #     continue
-                
+
                 # make sure there is no key files left
                 rc, out = remove_session_keys(namespace, pod_name)
                 if rc != 0:
-                    eprint('failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace, pod_name))
+                    eprint('failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace,
+                                                                                                           pod_name))
                     continue
                 time.sleep(5)
-                
+
                 eprint('need to kill the pod to force it to restart...{}/{}'.format(namespace, pod_name))
                 kill_pod(namespace, pod_name)
-                
 
                 record['state'] = 'suspension'
                 suspended_records.append(record)
@@ -390,10 +393,10 @@ def loop_work():
             need_save_secret = True
 
         for record in suspended_records:
-            if len(idle_healthy_records) <=0:
+            if len(idle_healthy_records) <= 0:
                 eprint('no healthy idle validator to swap to!!!')
                 break
-            
+
             healthy_record = idle_healthy_records.pop()
             if healthy_record:
                 record['state'] = 'idle'
@@ -401,33 +404,37 @@ def loop_work():
                 session_key = healthy_record['session_key'] = record['session_key']
                 record['session_key'] = ""
                 namespace, pod_name, pod_ip = healthy_record[
-                    'namespace'], healthy_record['pod_name'], healthy_record['pod_ip'],
+                                                  'namespace'], healthy_record['pod_name'], healthy_record['pod_ip'],
                 insert_keys(namespace, pod_name, session_key)
-                
+
         # verify the current setup
-        wrong = verify_session_keys_on_nodes() 
+        wrong = verify_session_keys_on_nodes()
         if need_save_secret or wrong:
-            create_update_operator_secret(CURRNET_SECRET_OBJ)
+            create_update_operator_secret(CURRENT_SECRET_OBJ)
 
     # reset secret obj
-    CURRNET_SECRET_OBJ = None
+    CURRENT_SECRET_OBJ = None
 
 
 _to_esc = re.compile(r'\s|[]()[]')
+
+
 def _esc_char(match):
     return '\\' + match.group(0)
+
 
 def my_escape(name):
     return _to_esc.sub(_esc_char, name)
 
+
 def extract_chain_base_path():
     global CHAIN_BASE_PATH
-    global CURRNET_SECRET_OBJ
+    global CURRENT_SECRET_OBJ
 
     if CHAIN_BASE_PATH:
         return
-    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
-        for record in CURRNET_SECRET_OBJ:
+    if CURRENT_SECRET_OBJ and len(CURRENT_SECRET_OBJ) > 0:
+        for record in CURRENT_SECRET_OBJ:
             namespace, pod_name = record['namespace'], record['pod_name']
             cmd = 'kubectl -n {} exec {} -- ls /mnt/cennznet/chains/'.format(namespace, pod_name)
             rc, out = run_cmd(cmd)
@@ -439,11 +446,13 @@ def extract_chain_base_path():
             if len(CHAIN_BASE_PATH) > 0:
                 break
 
+
 def verify_session_keys_on_nodes():
     any_wrong = False
-    if CURRNET_SECRET_OBJ and len(CURRNET_SECRET_OBJ) > 0:
-        for record in CURRNET_SECRET_OBJ:
-            namespace, pod_name, pod_ip, session_key = record['namespace'], record['pod_name'], record['pod_ip'], record['session_key']
+    if CURRENT_SECRET_OBJ and len(CURRENT_SECRET_OBJ) > 0:
+        for record in CURRENT_SECRET_OBJ:
+            namespace, pod_name, pod_ip, session_key = record['namespace'], record['pod_name'], record['pod_ip'], \
+                                                       record['session_key']
             if pod_ip is None:
                 eprint('{}/{} is not running!'.format(namespace, pod_name))
                 continue
@@ -467,28 +476,32 @@ def verify_session_keys_on_nodes():
             if file_count == 0:
                 eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))
                 if len(session_key) > 0 and record['state'] != 'suspension':
-                    eprint('node {}/{} is supposed to stake/suspend, but session key is not inserted/removed.')
+                    eprint('node {}/{} is supposed to stake/suspend, but session key is not inserted/removed.'.format(
+                        namespace, pod_name))
                     record['tainted'] = True
                     any_wrong = True
                 continue
             elif file_count == 4:
-                cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH, lines[2])
+                cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH,
+                                                                           lines[2])
                 rc, out = run_cmd_until_ok(cmd)
                 if session_key not in out:
-                    eprint('session key mismatch between record in secret and the key file on node!!!{}/{}'.format(namespace, pod_name))
+                    eprint('session key mismatch between record in secret and the key file on node!!!{}/{}'.format(
+                        namespace, pod_name))
                     record['tainted'] = True
                     any_wrong = True
                 else:
                     eprint('session key properly set up for {}/{}'.format(namespace, pod_name))
     return any_wrong
 
+
 def main():
     try:
         start_http_server(8080)
         while True:
             now_dt = datetime.datetime.now()
-            format = "%Y-%m-%d %H:%M:%S"
-            eprint('-----------------{}------------------'.format(now_dt.strftime(format)))
+            dt_format = "%Y-%m-%d %H:%M:%S"
+            eprint('-----------------{}------------------'.format(now_dt.strftime(dt_format)))
             loop_work()
             time.sleep(60)
     except Exception:
@@ -496,18 +509,17 @@ def main():
 
 
 if __name__ == '__main__':
-    CURRENT_NAMESPACE = get_namespace_for_current_pod()
-    secret_str = get_current_secret_as_str()
-    CURRNET_SECRET_OBJ = convert_json_2_object(secret_str)
-    extract_chain_base_path()
-    eprint(CURRNET_SECRET_OBJ)
-    eprint(CHAIN_BASE_PATH)
-    if CHAIN_BASE_PATH is None:
-        eprint('cannot find the chain base path, exit!!!')
-        sys.exit(-100)
-    time.sleep(10)
     try:
+        CURRENT_NAMESPACE = get_namespace_for_current_pod()
+        secret_str = get_current_secret_as_str()
+        CURRENT_SECRET_OBJ = convert_json_2_object(secret_str)
+        extract_chain_base_path()
+        eprint('CURRNET_SECRET_OBJ', CURRENT_SECRET_OBJ)
+        eprint('CHAIN_BASE_PATH', CHAIN_BASE_PATH)
+        if CHAIN_BASE_PATH is None:
+            eprint('cannot find the chain base path, exit!!!')
+            sys.exit(-100)
+        time.sleep(10)
         main()
     except Exception:
         eprint(traceback.format_exc())
-

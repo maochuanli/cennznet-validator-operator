@@ -349,13 +349,13 @@ def loop_work():
         extract_pods_metrics()
         best, finalized, sync_target = get_max_best_finalized_number()
         update_node_status(best, finalized, sync_target)
-        show_data_frame()
 
         suspended_records = []
         idle_healthy_records = []
 
         # verify the current setup
         verify_session_keys_on_nodes()
+        show_data_frame()
 
         for record in CURRENT_SECRET_OBJ:
             if record.get('tainted'):

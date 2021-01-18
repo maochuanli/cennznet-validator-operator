@@ -467,7 +467,7 @@ def verify_session_keys_on_nodes():
 
             for line in lines:
                 if len(line.strip()) > 0:
-                    file_count += 0
+                    file_count += 1
             eprint('file count: ', file_count)
             eprint('lines: ', lines)
             if not (file_count == 0 or file_count == 4):

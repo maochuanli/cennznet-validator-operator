@@ -471,8 +471,8 @@ def verify_session_keys_on_nodes():
                 lines = trimmed_out.split('\n')
             file_count = len(lines)
 
-            eprint('file count: ', file_count)
-            eprint('lines: ', lines)
+            # eprint('file count: ', file_count)
+            # eprint('lines: ', lines)
 
             if file_count == 0:
                 eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))

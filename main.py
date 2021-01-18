@@ -483,16 +483,18 @@ def verify_session_keys_on_nodes():
                     any_wrong = True
                 continue
             elif file_count == 4:
-                cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH,
-                                                                           lines[2])
-                rc, out = run_cmd_until_ok(cmd)
-                if session_key not in out:
-                    eprint('session key mismatch between record in secret and the key file on node!!!{}/{}'.format(
-                        namespace, pod_name))
-                    record['tainted'] = True
-                    any_wrong = True
-                else:
-                    eprint('session key properly set up for {}/{}'.format(namespace, pod_name))
+                for i in range(4):
+                    file_name = lines[i]
+                    cmd = 'kubectl -n {} exec {} -- cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH,
+                                                                               file_name)
+                    rc, out = run_cmd_until_ok(cmd)
+                    if session_key not in out:
+                        eprint('session key mismatch between record in secret and the key file {}/{} on file: {}'.format(
+                            namespace, pod_name, file_name))
+                        record['tainted'] = True
+                        any_wrong = True
+                    else:
+                        eprint('session key properly set up for {}/{} on file: {}'.format(namespace, pod_name, file_name))
             else:
                 eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
                 eprint(out)

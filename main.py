@@ -457,6 +457,7 @@ def verify_session_keys_on_nodes():
             if pod_ip is None:
                 eprint('{}/{} is not running!'.format(namespace, pod_name))
                 continue
+            record['tainted'] = False
             cmd = 'kubectl -n {} exec {} -- ls {}/keystore/'.format(namespace, pod_name, CHAIN_BASE_PATH)
             rc, out = run_cmd_until_ok(cmd)
             if rc != 0:
@@ -470,12 +471,7 @@ def verify_session_keys_on_nodes():
                     file_count += 1
             eprint('file count: ', file_count)
             eprint('lines: ', lines)
-            if not (file_count == 0 or file_count == 4):
-                eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
-                eprint(out)
-                record['tainted'] = True
-                any_wrong = True
-                continue
+
             if file_count == 0:
                 eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))
                 if len(session_key) > 0 and record['state'] != 'suspension':
@@ -495,6 +491,12 @@ def verify_session_keys_on_nodes():
                     any_wrong = True
                 else:
                     eprint('session key properly set up for {}/{}'.format(namespace, pod_name))
+            else:
+                eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
+                eprint(out)
+                record['tainted'] = True
+                any_wrong = True
+                continue
     return any_wrong
 
 

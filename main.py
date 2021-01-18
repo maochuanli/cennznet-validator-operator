@@ -464,10 +464,12 @@ def verify_session_keys_on_nodes():
                 continue
             lines = out.strip().split('\n')
             file_count = 0
+
             for line in lines:
                 if len(line.strip()) > 0:
                     file_count += 0
-
+            eprint('file count: ', file_count)
+            eprint('lines: ', lines)
             if not (file_count == 0 or file_count == 4):
                 eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
                 eprint(out)

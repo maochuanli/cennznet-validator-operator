@@ -458,17 +458,19 @@ def verify_session_keys_on_nodes():
                 eprint('{}/{} is not running!'.format(namespace, pod_name))
                 continue
             record['tainted'] = False
+
             cmd = 'kubectl -n {} exec {} -- ls {}/keystore/'.format(namespace, pod_name, CHAIN_BASE_PATH)
             rc, out = run_cmd_until_ok(cmd)
             if rc != 0:
                 eprint('failed to list session key files for {}/{}'.format(namespace, pod_name))
                 continue
-            lines = out.strip().split('\n')
-            file_count = 0
 
-            for line in lines:
-                if len(line.strip()) > 0:
-                    file_count += 1
+            lines = []
+            trimmed_out = out.strip()
+            if len(trimmed_out) > 0:
+                lines = trimmed_out.split('\n')
+            file_count = len(lines)
+
             eprint('file count: ', file_count)
             eprint('lines: ', lines)
 

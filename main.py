@@ -14,6 +14,12 @@ import re
 from kubernetes import config as kube_config
 from kubernetes.client.api import core_v1_api
 from kubernetes.stream import stream as kube_stream
+from prometheus_client import Gauge
+from prometheus_client import Counter
+
+c_process = Counter('my_process_total', 'HTTP Failures', ['method', 'endpoint'])
+
+
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
@@ -373,6 +379,9 @@ def kill_pod(namespace, pod_name):
 def loop_work():
     global CURRENT_SECRET_OBJ
     global CURRENT_SECRET_OBJ_BACKUP
+
+    c_process.labels(method='get', endpoint='/').inc()
+    c_process.labels(method='post', endpoint='/submit').inc()
 
     secret_string = get_current_secret_as_str()
     CURRENT_SECRET_OBJ = convert_json_2_object(secret_string)

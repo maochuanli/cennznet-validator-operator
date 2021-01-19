@@ -11,6 +11,8 @@ import jmespath
 import requests
 import pandas as pd
 import re
+from kubernetes import config as kube_config
+from kubernetes.client.api import core_v1_api
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
@@ -18,11 +20,20 @@ SECRET_FILE_NAME = '/tmp/secret.json'
 CURRENT_SECRET_OBJ = None
 CURRENT_SECRET_OBJ_BACKUP = None
 CHAIN_BASE_PATH = None
-
+API_INSTANCE = None
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     sys.stderr.flush()
+
+
+def get_pod_in_namespace(namespace, pod_name):
+    try:
+        pod_obj = API_INSTANCE.read_namespaced_pod(namespace=namespace, name=pod_name)
+        return pod_obj
+    except Exception:
+        eprint(traceback.format_exc())
+    return None
 
 
 def run_cmd(cmd):
@@ -171,9 +182,11 @@ def get_pod_ip_real(namespace, pod_name):
 
 def get_pod_ip(namespace, pod_name):
     for i in range(10):
-        pod_ip = get_pod_ip_real(namespace, pod_name)
-        if pod_ip:
-            return pod_ip
+        pod_obj = get_pod_in_namespace(namespace, pod_name)
+        if pod_obj:
+            pod_ip = pod_obj.status.pod_ip
+            if pod_ip:
+                return pod_ip
         time.sleep(6)
 
 
@@ -519,6 +532,9 @@ def main():
 
 if __name__ == '__main__':
     try:
+        kube_config.load_incluster_config()
+        API_INSTANCE = core_v1_api.CoreV1Api()
+        eprint('API_INSTANCE', API_INSTANCE)
         CURRENT_NAMESPACE = get_namespace_for_current_pod()
         secret_str = get_current_secret_as_str()
         CURRENT_SECRET_OBJ = convert_json_2_object(secret_str)

@@ -13,6 +13,7 @@ import pandas as pd
 import re
 from kubernetes import config as kube_config
 from kubernetes.client.api import core_v1_api
+from kubernetes.stream import stream as kube_stream
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
@@ -35,6 +36,24 @@ def get_pod_in_namespace(namespace, pod_name):
         eprint(traceback.format_exc())
     return None
 
+
+def run_cmd_in_namespaced_pod(namespace, pod_name, cmd):
+    exec_command = [
+        '/bin/bash',
+        '-c',
+        cmd]
+    try:
+        resp = kube_stream(API_INSTANCE.connect_get_namespaced_pod_exec,
+                      pod_name,
+                      namespace,
+                      command=exec_command,
+                      stderr=True, stdin=False,
+                      stdout=True, tty=False)
+        print("Response: " + resp)
+        return resp
+    except Exception:
+        eprint(traceback.format_exc())
+    return None
 
 def run_cmd(cmd):
     eprint('CMD: ' + cmd)

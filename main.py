@@ -53,7 +53,8 @@ def run_cmd_in_namespaced_pod(namespace, pod_name, cmd):
         return resp
     except Exception:
         eprint(traceback.format_exc())
-    return None
+    return ''
+
 
 def run_cmd(cmd):
     eprint('CMD: ' + cmd)
@@ -491,14 +492,17 @@ def verify_session_keys_on_nodes():
                 continue
             record['tainted'] = False
 
-            cmd = 'kubectl -n {} exec {} -- ls {}/keystore/'.format(namespace, pod_name, CHAIN_BASE_PATH)
-            rc, out = run_cmd_until_ok(cmd)
-            if rc != 0:
-                eprint('failed to list session key files for {}/{}'.format(namespace, pod_name))
-                continue
+            kube_cmd = 'ls {}/keystore/'.format(CHAIN_BASE_PATH)
+            cmd_out = run_cmd_in_namespaced_pod(namespace, pod_name, kube_cmd)
+
+            # cmd = 'kubectl -n {} exec {} -- ls {}/keystore/'.format(namespace, pod_name, CHAIN_BASE_PATH)
+            # rc, out = run_cmd_until_ok(cmd)
+            # if rc != 0:
+            #     eprint('failed to list session key files for {}/{}'.format(namespace, pod_name))
+            #     continue
 
             lines = []
-            trimmed_out = out.strip()
+            trimmed_out = cmd_out.strip()
             if len(trimmed_out) > 0:
                 lines = trimmed_out.split('\n')
             file_count = len(lines)

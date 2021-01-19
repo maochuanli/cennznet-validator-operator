@@ -23,6 +23,7 @@ CURRENT_SECRET_OBJ_BACKUP = None
 CHAIN_BASE_PATH = None
 API_INSTANCE = None
 
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     sys.stderr.flush()
@@ -44,12 +45,12 @@ def run_cmd_in_namespaced_pod(namespace, pod_name, cmd):
         cmd]
     try:
         resp = kube_stream(API_INSTANCE.connect_get_namespaced_pod_exec,
-                      pod_name,
-                      namespace,
-                      command=exec_command,
-                      stderr=True, stdin=False,
-                      stdout=True, tty=False)
-        print("Response: " + resp)
+                           pod_name,
+                           namespace,
+                           command=exec_command,
+                           stderr=True, stdin=False,
+                           stdout=True, tty=False)
+        # print("Response: " + resp)
         return resp
     except Exception:
         eprint(traceback.format_exc())
@@ -132,7 +133,7 @@ def backup_current_secret():
 
 
 def create_update_operator_secret(session_key_json_obj):
-    if backup_current_secret() == False:
+    if backup_current_secret() is False:
         eprint('failed to backup current secret')
         return False
 
@@ -210,19 +211,19 @@ def get_pod_ip(namespace, pod_name):
         time.sleep(6)
 
 
-def get_pod_restart_count(namespace, pod_name):
-    cmd = 'kubectl get pod {} -n {} -o json'.format(pod_name, namespace)
-    rc, out = run_cmd(cmd)
-    try:
-        json_obj = convert_json_2_object(out)
-        restart_count = jmespath.search(
-            'status.containerStatuses[0].restartCount', json_obj)
-        if restart_count is None:
-            return "-2"
-        return restart_count
-    except Exception:
-        eprint(traceback.format_exc())
-    return "-1"
+# def get_pod_restart_count(namespace, pod_name):
+#     cmd = 'kubectl get pod {} -n {} -o json'.format(pod_name, namespace)
+#     rc, out = run_cmd(cmd)
+#     try:
+#         json_obj = convert_json_2_object(out)
+#         restart_count = jmespath.search(
+#             'status.containerStatuses[0].restartCount', json_obj)
+#         if restart_count is None:
+#             return "-2"
+#         return restart_count
+#     except Exception:
+#         eprint(traceback.format_exc())
+#     return "-1"
 
 
 def extract_pods_ips():
@@ -403,10 +404,6 @@ def loop_work():
             if record['state'] == 'staking' and record['healthy'] is False:
                 eprint(
                     '{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
-                # if int(record.get('substrate_block_height_best', '-4')) <= 100:
-                #     eprint('record might not be running properly, so we cannot properly remove the keys from it, skip it!!')
-                #     eprint(record)
-                #     continue
 
                 # make sure there is no key files left
                 rc, out = remove_session_keys(namespace, pod_name)
@@ -421,7 +418,7 @@ def loop_work():
 
                 record['state'] = 'suspension'
                 suspended_records.append(record)
-            elif record['state'] == 'idle' and record['healthy'] == True:
+            elif record['state'] == 'idle' and record['healthy'] is True:
                 idle_healthy_records.append(record)
 
         need_save_secret = False
@@ -495,20 +492,11 @@ def verify_session_keys_on_nodes():
             kube_cmd = 'ls {}/keystore/'.format(CHAIN_BASE_PATH)
             cmd_out = run_cmd_in_namespaced_pod(namespace, pod_name, kube_cmd)
 
-            # cmd = 'kubectl -n {} exec {} -- ls {}/keystore/'.format(namespace, pod_name, CHAIN_BASE_PATH)
-            # rc, out = run_cmd_until_ok(cmd)
-            # if rc != 0:
-            #     eprint('failed to list session key files for {}/{}'.format(namespace, pod_name))
-            #     continue
-
             lines = []
             trimmed_out = cmd_out.strip()
             if len(trimmed_out) > 0:
                 lines = trimmed_out.split('\n')
             file_count = len(lines)
-
-            # eprint('file count: ', file_count)
-            # eprint('lines: ', lines)
 
             if file_count == 0:
                 eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))
@@ -521,17 +509,18 @@ def verify_session_keys_on_nodes():
             elif file_count == 4:
                 for i in range(4):
                     file_name = lines[i]
-                    cmd = 'cat {}/keystore/{}'.format(CHAIN_BASE_PATH,
-                                                                               file_name)
+                    cmd = 'cat {}/keystore/{}'.format(CHAIN_BASE_PATH, file_name)
                     # rc, out = run_cmd_until_ok(cmd)
                     out = run_cmd_in_namespaced_pod(namespace, pod_name, cmd)
                     if session_key not in out:
-                        eprint('session key mismatch between record in secret and the key file {}/{} on file: {}'.format(
-                            namespace, pod_name, file_name))
+                        eprint(
+                            'session key mismatch between record in secret and the key file {}/{} on file: {}'.format(
+                                namespace, pod_name, file_name))
                         record['tainted'] = True
                         any_wrong = True
                     else:
-                        eprint('session key properly set up for {}/{} on file: {}'.format(namespace, pod_name, file_name))
+                        eprint(
+                            'session key properly set up for {}/{} on file: {}'.format(namespace, pod_name, file_name))
             else:
                 eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
                 eprint(out)

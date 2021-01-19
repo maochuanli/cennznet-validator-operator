@@ -499,9 +499,9 @@ def verify_session_keys_on_nodes():
             file_count = len(lines)
 
             if file_count == 0:
-                eprint('no session key files on this node: {}/{}'.format(namespace, pod_name))
+                eprint('{}/{} no session key files on this node'.format(namespace, pod_name))
                 if len(session_key) > 0 and record['state'] != 'suspension':
-                    eprint('node {}/{} is supposed to stake/suspend, but session key is not inserted/removed.'.format(
+                    eprint('{}/{} is supposed to stake/suspend, but session key is not inserted/removed.'.format(
                         namespace, pod_name))
                     record['tainted'] = True
                     any_wrong = True
@@ -514,15 +514,15 @@ def verify_session_keys_on_nodes():
                     out = run_cmd_in_namespaced_pod(namespace, pod_name, cmd)
                     if session_key not in out:
                         eprint(
-                            'session key mismatch between record in secret and the key file {}/{} on file: {}'.format(
+                            '{}/{} session key mismatch between record in secret and the key file  on file: {}'.format(
                                 namespace, pod_name, file_name))
                         record['tainted'] = True
                         any_wrong = True
                     else:
                         eprint(
-                            'session key properly set up for {}/{} on file: {}'.format(namespace, pod_name, file_name))
+                            '{}/{} session key in file: {}'.format(namespace, pod_name, file_name))
             else:
-                eprint('session keys files not complete length: {} {}/{}'.format(len(lines), namespace, pod_name))
+                eprint('{}/{} session keys files not complete length: {} '.format(namespace, pod_name, len(lines)))
                 eprint(out)
                 record['tainted'] = True
                 any_wrong = True
@@ -552,7 +552,7 @@ if __name__ == '__main__':
         secret_str = get_current_secret_as_str()
         CURRENT_SECRET_OBJ = convert_json_2_object(secret_str)
         extract_chain_base_path()
-        eprint('CURRNET_SECRET_OBJ', CURRENT_SECRET_OBJ)
+        # eprint('CURRNET_SECRET_OBJ', CURRENT_SECRET_OBJ)
         eprint('CHAIN_BASE_PATH', CHAIN_BASE_PATH)
         if CHAIN_BASE_PATH is None:
             eprint('cannot find the chain base path, exit!!!')

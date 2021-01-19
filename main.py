@@ -521,7 +521,7 @@ def verify_session_keys_on_nodes():
             elif file_count == 4:
                 for i in range(4):
                     file_name = lines[i]
-                    cmd = 'cat {}/keystore/{}'.format(namespace, pod_name, CHAIN_BASE_PATH,
+                    cmd = 'cat {}/keystore/{}'.format(CHAIN_BASE_PATH,
                                                                                file_name)
                     # rc, out = run_cmd_until_ok(cmd)
                     out = run_cmd_in_namespaced_pod(namespace, pod_name, cmd)

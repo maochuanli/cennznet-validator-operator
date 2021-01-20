@@ -547,6 +547,8 @@ def verify_session_keys_on_nodes():
 def main_thread():
     global CURRENT_NAMESPACE
     global CURRENT_SECRET_OBJ
+    global API_INSTANCE
+
     try:
         kube_config.load_incluster_config()
         API_INSTANCE = core_v1_api.CoreV1Api()

@@ -18,6 +18,7 @@ import prometheus_client
 from prometheus_client import Gauge
 from flask import Response, Flask
 from threading import Thread
+import logging
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
@@ -31,6 +32,7 @@ OPERATOR_HEALTHY = Gauge("operator_healthy", 'check if the operator is healthy')
 UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current unhealthy validators')
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
 
+logging.basicConfig(level=logging.DEBUG)
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)

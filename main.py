@@ -568,7 +568,7 @@ def main_thread():
             dt_format = "%Y-%m-%d %H:%M:%S"
             eprint('-----------------{}------------------'.format(now_dt.strftime(dt_format)))
             loop_work()
-            time.sleep(60)
+            time.sleep(30)
     except Exception:
         eprint(traceback.format_exc())
 

@@ -513,7 +513,7 @@ def verify_session_keys_on_nodes():
             file_count = len(lines)
 
             if file_count == 0:
-                eprint('{}/{} no session key files on this node'.format(namespace, pod_name))
+                # eprint('{}/{} no session key files on this node'.format(namespace, pod_name))
                 if len(session_key) > 0 and record['state'] != 'suspension':
                     eprint('{}/{} is supposed to stake/suspend, but session key is not inserted/removed.'.format(
                         namespace, pod_name))
@@ -532,9 +532,9 @@ def verify_session_keys_on_nodes():
                                 namespace, pod_name, file_name))
                         record['tainted'] = True
                         any_wrong = True
-                    else:
-                        eprint(
-                            '{}/{} session key in file: {}'.format(namespace, pod_name, file_name))
+                    # else:
+                    #     eprint(
+                    #         '{}/{} session key in file: {}'.format(namespace, pod_name, file_name))
             else:
                 eprint('{}/{} session keys files not complete length: {} '.format(namespace, pod_name, len(lines)))
                 eprint(out)

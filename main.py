@@ -32,11 +32,12 @@ OPERATOR_HEALTHY = Gauge("operator_healthy", 'check if the operator is healthy')
 UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current unhealthy validators')
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARN)
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-    sys.stderr.flush()
+
+# def eprint(*args, **kwargs):
+#     print(*args, file=sys.stderr, **kwargs)
+#     sys.stderr.flush()
 
 
 def get_pod_in_namespace(namespace, pod_name):
@@ -44,7 +45,7 @@ def get_pod_in_namespace(namespace, pod_name):
         pod_obj = API_INSTANCE.read_namespaced_pod(namespace=namespace, name=pod_name)
         return pod_obj
     except Exception:
-        eprint(traceback.format_exc())
+        logging.warning(traceback.format_exc())
     return None
 
 
@@ -63,18 +64,20 @@ def run_cmd_in_namespaced_pod(namespace, pod_name, cmd):
         # print("Response: " + resp)
         return resp
     except Exception:
-        eprint(traceback.format_exc())
+        logging.warning(traceback.format_exc())
     return ''
 
 
 def run_cmd(cmd):
-    eprint('CMD: ' + cmd)
+    logging.info('CMD: ' + cmd)
     process = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     result = process.communicate()[0]
     result_txt = result.decode()
     if process.returncode != 0:
-        eprint('{},{}'.format(process.returncode, result_txt))
+        logging.warning('{},{}'.format(process.returncode, result_txt))
+    else:
+        logging.info('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt
 
 
@@ -105,7 +108,7 @@ def http_get(url):
 #     if response.status_code == 200:
 #         return True
 #     else:
-#         eprint(response)
+#         logging.warning(response)
 #     return False
 
 
@@ -124,7 +127,7 @@ def get_current_secret_as_str():
 
 def backup_current_secret():
     if not CURRENT_SECRET_OBJ_BACKUP:
-        eprint('no secret at present!')
+        logging.error('no secret at present!')
         return True
 
     current_secret = convert_object_2_json(CURRENT_SECRET_OBJ_BACKUP)
@@ -144,7 +147,7 @@ def backup_current_secret():
 
 def create_update_operator_secret(session_key_json_obj):
     if backup_current_secret() is False:
-        eprint('failed to backup current secret')
+        logging.error('failed to backup current secret')
         return False
 
     json_str = convert_object_2_json(session_key_json_obj)
@@ -188,14 +191,14 @@ def convert_json_2_object(json_str):
     try:
         return json.loads(json_str)
     except Exception:
-        eprint(traceback.format_exc())
+        logging.warning(traceback.format_exc())
 
 
 def convert_object_2_json(python_object):
     try:
         return json.dumps(python_object)
     except Exception:
-        eprint(traceback.format_exc())
+        logging.warning(traceback.format_exc())
 
 
 def get_pod_ip_real(namespace, pod_name):
@@ -208,7 +211,7 @@ def get_pod_ip_real(namespace, pod_name):
         pod_ip = jmespath.search('status.podIP', json_obj)
         return pod_ip
     except Exception:
-        eprint(traceback.format_exc())
+        logging.warning(traceback.format_exc())
 
 
 def get_pod_ip(namespace, pod_name):
@@ -232,7 +235,7 @@ def get_pod_ip(namespace, pod_name):
 #             return "-2"
 #         return restart_count
 #     except Exception:
-#         eprint(traceback.format_exc())
+#         logging.warning(traceback.format_exc())
 #     return "-1"
 
 
@@ -244,7 +247,7 @@ def extract_pods_ips():
         pod_ip = get_pod_ip(namespace, pod_name)
         record['pod_ip'] = pod_ip
         # record['restart_count'] = get_pod_restart_count(namespace, pod_name)
-        # eprint(namespace, pod_name, pod_ip)
+        # logging.warning(namespace, pod_name, pod_ip)
 
 
 def get_max_best_finalized_number():
@@ -287,7 +290,7 @@ def extract_pods_metrics():
         record['substrate_block_height_finalized'] = '-5'
         record['substrate_block_height_sync_target'] = '-5'
         if not pod_ip:
-            eprint(
+            logging.error(
                 '{}/{} pod ip {}, cannot extract metrics'.format(namespace, pod_name, pod_ip))
             continue
         pod_metrics_url = 'http://{}:{}/metrics'.format(pod_ip, 9615)
@@ -305,7 +308,7 @@ def extract_pods_metrics():
                     record['substrate_block_height_sync_target'] = line.split()[-1]
 
         except Exception:
-            eprint(traceback.format_exc())
+            logging.warning(traceback.format_exc())
 
 
 def show_data_frame():
@@ -315,7 +318,7 @@ def show_data_frame():
     df = pd.DataFrame(CURRENT_SECRET_OBJ, columns=[
         'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized',
         'substrate_block_height_sync_target', 'state', 'healthy', 'tainted'])
-    eprint(df)
+    logging.warning(df)
 
     UNHEALTHY_VALIDATOR_NUM.set(0)
     for record in CURRENT_SECRET_OBJ:
@@ -409,7 +412,7 @@ def loop_work():
 
         for record in CURRENT_SECRET_OBJ:
             if record.get('tainted'):
-                eprint('cannot continue to process, record is tainted! \n {}'.format(record))
+                logging.error('cannot continue to process, record is tainted! \n {}'.format(record))
                 return
 
         for record in CURRENT_SECRET_OBJ:
@@ -418,18 +421,18 @@ def loop_work():
                 continue
             namespace, pod_name = record['namespace'], record['pod_name']
             if record['state'] == 'staking' and record['healthy'] is False:
-                eprint(
+                logging.warning(
                     '{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
 
                 # make sure there is no key files left
                 rc, out = remove_session_keys(namespace, pod_name)
                 if rc != 0:
-                    eprint('failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace,
+                    logging.error('failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace,
                                                                                                            pod_name))
                     continue
                 time.sleep(5)
 
-                eprint('need to kill the pod to force it to restart...{}/{}'.format(namespace, pod_name))
+                logging.warning('need to kill the pod to force it to restart...{}/{}'.format(namespace, pod_name))
                 kill_pod(namespace, pod_name)
 
                 record['state'] = 'suspension'
@@ -443,7 +446,7 @@ def loop_work():
 
         for record in suspended_records:
             if len(idle_healthy_records) <= 0:
-                eprint('no healthy idle validator to swap to!!!')
+                logging.warning('no healthy idle validator to swap to!!!')
                 break
 
             healthy_record = idle_healthy_records.pop()
@@ -486,7 +489,7 @@ def extract_chain_base_path():
             cmd = 'kubectl -n {} exec {} -- ls /mnt/cennznet/chains/'.format(namespace, pod_name)
             rc, out = run_cmd(cmd)
             if rc != 0:
-                eprint(out)
+                logging.warning(out)
                 continue
             base_path = os.path.join('/mnt/cennznet/chains/', out.strip())
             CHAIN_BASE_PATH = my_escape(base_path)
@@ -501,7 +504,7 @@ def verify_session_keys_on_nodes():
             namespace, pod_name, pod_ip, session_key = record['namespace'], record['pod_name'], record['pod_ip'], \
                                                        record['session_key']
             if pod_ip is None:
-                eprint('{}/{} is not running!'.format(namespace, pod_name))
+                logging.warning('{}/{} is not running!'.format(namespace, pod_name))
                 continue
             record['tainted'] = False
 
@@ -515,9 +518,9 @@ def verify_session_keys_on_nodes():
             file_count = len(lines)
 
             if file_count == 0:
-                # eprint('{}/{} no session key files on this node'.format(namespace, pod_name))
+                logging.info('{}/{} no session key files on this node'.format(namespace, pod_name))
                 if len(session_key) > 0 and record['state'] != 'suspension':
-                    eprint('{}/{} is supposed to stake/suspend, but session key is not inserted/removed.'.format(
+                    logging.error('{}/{} is supposed to stake/suspend, but session key is not inserted/removed.'.format(
                         namespace, pod_name))
                     record['tainted'] = True
                     any_wrong = True
@@ -529,17 +532,17 @@ def verify_session_keys_on_nodes():
                     # rc, out = run_cmd_until_ok(cmd)
                     out = run_cmd_in_namespaced_pod(namespace, pod_name, cmd)
                     if session_key not in out:
-                        eprint(
+                        logging.error(
                             '{}/{} session key mismatch between record in secret and the key file  on file: {}'.format(
                                 namespace, pod_name, file_name))
                         record['tainted'] = True
                         any_wrong = True
-                    # else:
-                    #     eprint(
-                    #         '{}/{} session key in file: {}'.format(namespace, pod_name, file_name))
+                    else:
+                        logging.info(
+                            '{}/{} session key in file: {}'.format(namespace, pod_name, file_name))
             else:
-                eprint('{}/{} session keys files not complete length: {} '.format(namespace, pod_name, len(lines)))
-                eprint(out)
+                logging.error('{}/{} session keys files not complete length: {} '.format(namespace, pod_name, len(lines)))
+                logging.error(out)
                 record['tainted'] = True
                 any_wrong = True
                 continue
@@ -554,25 +557,25 @@ def main_thread():
     try:
         kube_config.load_incluster_config()
         API_INSTANCE = core_v1_api.CoreV1Api()
-        eprint('API_INSTANCE', API_INSTANCE)
+        logging.info('API_INSTANCE: ' + API_INSTANCE)
         CURRENT_NAMESPACE = get_namespace_for_current_pod()
         secret_str = get_current_secret_as_str()
         CURRENT_SECRET_OBJ = convert_json_2_object(secret_str)
         extract_chain_base_path()
-        # eprint('CURRNET_SECRET_OBJ', CURRENT_SECRET_OBJ)
-        eprint('CHAIN_BASE_PATH', CHAIN_BASE_PATH)
+        logging.debug('CURRNET_SECRET_OBJ: ' + CURRENT_SECRET_OBJ)
+        logging.info('CHAIN_BASE_PATH:' + CHAIN_BASE_PATH)
         if CHAIN_BASE_PATH is None:
-            eprint('cannot find the chain base path, exit!!!')
+            logging.error('cannot find the chain base path, exit!!!')
             sys.exit(-100)
 
         while True:
             now_dt = datetime.datetime.now()
             dt_format = "%Y-%m-%d %H:%M:%S"
-            eprint('-----------------{}------------------'.format(now_dt.strftime(dt_format)))
+            logging.info('-----------------{}------------------'.format(now_dt.strftime(dt_format)))
             loop_work()
             time.sleep(30)
     except Exception:
-        eprint(traceback.format_exc())
+        logging.warning(traceback.format_exc())
 
 
 FLASK_APP = Flask(__name__)
@@ -598,4 +601,4 @@ if __name__ == '__main__':
         MAIN_THREAD.start()
         FLASK_APP.run(host='0.0.0.0', port=8080)
     except Exception:
-        eprint(traceback.format_exc())
+        logging.warning(traceback.format_exc())

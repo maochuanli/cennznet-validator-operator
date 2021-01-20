@@ -557,12 +557,12 @@ def main_thread():
     try:
         kube_config.load_incluster_config()
         API_INSTANCE = core_v1_api.CoreV1Api()
-        logging.info('API_INSTANCE: ' + API_INSTANCE)
+        logging.info('API_INSTANCE: ' + str(API_INSTANCE))
         CURRENT_NAMESPACE = get_namespace_for_current_pod()
         secret_str = get_current_secret_as_str()
         CURRENT_SECRET_OBJ = convert_json_2_object(secret_str)
         extract_chain_base_path()
-        logging.debug('CURRNET_SECRET_OBJ: ' + CURRENT_SECRET_OBJ)
+        logging.debug('CURRNET_SECRET_OBJ: ' + str(CURRENT_SECRET_OBJ))
         logging.info('CHAIN_BASE_PATH:' + CHAIN_BASE_PATH)
         if CHAIN_BASE_PATH is None:
             logging.error('cannot find the chain base path, exit!!!')

@@ -14,12 +14,10 @@ import re
 from kubernetes import config as kube_config
 from kubernetes.client.api import core_v1_api
 from kubernetes.stream import stream as kube_stream
+import prometheus_client
 from prometheus_client import Gauge
-from prometheus_client import Counter
-
-c_process = Counter('my_process_total', 'HTTP Failures', ['method', 'endpoint'])
-
-
+from flask import Response, Flask
+from threading import Thread
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
@@ -28,6 +26,10 @@ CURRENT_SECRET_OBJ = None
 CURRENT_SECRET_OBJ_BACKUP = None
 CHAIN_BASE_PATH = None
 API_INSTANCE = None
+
+OPERATOR_HEALTHY = Gauge("operator_healthy", 'check if the operator is healthy')
+UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current unhealthy validators')
+SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
 
 
 def eprint(*args, **kwargs):
@@ -313,6 +315,11 @@ def show_data_frame():
         'substrate_block_height_sync_target', 'state', 'healthy', 'tainted'])
     eprint(df)
 
+    UNHEALTHY_VALIDATOR_NUM.set(0)
+    for record in CURRENT_SECRET_OBJ:
+        if record.get('healthy') is False:
+            UNHEALTHY_VALIDATOR_NUM.inc(1)
+
 
 # def get_public_key(cmd_out):
 #     lines = cmd_out.split('\n')
@@ -364,6 +371,7 @@ def insert_keys(namespace, pod_name, node_session_key):
     rc = insert_key_type(namespace, pod_name, 'babe', node_session_key)
     rc = insert_key_type(namespace, pod_name, 'imon', node_session_key)
     rc = insert_key_type(namespace, pod_name, 'gran', node_session_key, 'Ed25519')
+    SWAP_VALIDATOR_COUNT.inc(1)
 
 
 def remove_session_keys(namespace, pod_name):
@@ -379,9 +387,6 @@ def kill_pod(namespace, pod_name):
 def loop_work():
     global CURRENT_SECRET_OBJ
     global CURRENT_SECRET_OBJ_BACKUP
-
-    c_process.labels(method='get', endpoint='/').inc()
-    c_process.labels(method='post', endpoint='/submit').inc()
 
     secret_string = get_current_secret_as_str()
     CURRENT_SECRET_OBJ = convert_json_2_object(secret_string)
@@ -539,20 +544,9 @@ def verify_session_keys_on_nodes():
     return any_wrong
 
 
-def main():
-    try:
-        start_http_server(8080)
-        while True:
-            now_dt = datetime.datetime.now()
-            dt_format = "%Y-%m-%d %H:%M:%S"
-            eprint('-----------------{}------------------'.format(now_dt.strftime(dt_format)))
-            loop_work()
-            time.sleep(60)
-    except Exception:
-        eprint(traceback.format_exc())
-
-
-if __name__ == '__main__':
+def main_thread():
+    global CURRENT_NAMESPACE
+    global CURRENT_SECRET_OBJ
     try:
         kube_config.load_incluster_config()
         API_INSTANCE = core_v1_api.CoreV1Api()
@@ -566,7 +560,38 @@ if __name__ == '__main__':
         if CHAIN_BASE_PATH is None:
             eprint('cannot find the chain base path, exit!!!')
             sys.exit(-100)
-        time.sleep(10)
-        main()
+
+        while True:
+            now_dt = datetime.datetime.now()
+            dt_format = "%Y-%m-%d %H:%M:%S"
+            eprint('-----------------{}------------------'.format(now_dt.strftime(dt_format)))
+            loop_work()
+            time.sleep(60)
+    except Exception:
+        eprint(traceback.format_exc())
+
+
+FLASK_APP = Flask(__name__)
+MAIN_THREAD = Thread(target=main_thread, args=())
+
+
+@FLASK_APP.route("/")
+def flask_root():
+    if MAIN_THREAD.is_alive():
+        OPERATOR_HEALTHY.set(1)
+    else:
+        OPERATOR_HEALTHY.set(0)
+    return Response('OK', mimetype="text/plain")
+
+
+@FLASK_APP.route("/metrics")
+def flask_metrics():
+    return Response(prometheus_client.generate_latest(), mimetype="text/plain")
+
+
+if __name__ == '__main__':
+    try:
+        MAIN_THREAD.start()
+        FLASK_APP.run(host='0.0.0.0', port=8080)
     except Exception:
         eprint(traceback.format_exc())

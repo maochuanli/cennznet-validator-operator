@@ -344,6 +344,20 @@ def insert_key_type(namespace, pod_name, key_type, node_session_key, keyscheme='
     return rc
 
 
+def restart_granpa_voting(namespace, pod_name):
+    cmd = 'kubectl -n {} exec {} -- apt update; apt install -y curl'.format(namespace, pod_name)
+    rc, out = run_cmd_until_ok(cmd)
+    cmd = 'kubectl -n {} exec {} -- which curl'.format(namespace, pod_name)
+    rc, out = run_cmd_until_ok(cmd)
+    if rc == 0 and 'not found' not in out:
+        restart_cmd = '''
+        curl -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "method":"grandpa_restartVoter", "params":[], "id": 1 }' http://localhost:9933
+        '''
+        logging.info('{}/{} curl is available'.format(namespace, pod_name))
+        curl_out = run_cmd_in_namespaced_pod(namespace, pod_name, restart_cmd.strip())
+        logging.warning(curl_out)
+
+
 def insert_keys(namespace, pod_name, node_session_key):
     rc = insert_key_type(namespace, pod_name, 'audi', node_session_key)
     rc2 = insert_key_type(namespace, pod_name, 'babe', node_session_key)
@@ -352,9 +366,10 @@ def insert_keys(namespace, pod_name, node_session_key):
     SWAP_VALIDATOR_COUNT.inc(1)
     if (rc + rc2 + rc3 + rc4) > 0:
         logging.error('failed to insert session key to {}/{}'.format(namespace, pod_name))
+        return
     else:
         logging.warning('{}/{} got the new session key'.format(namespace, pod_name))
-
+        restart_granpa_voting(namespace, pod_name)
 
 def remove_session_keys(namespace, pod_name):
     cmd = 'kubectl exec -n {} {} -- /bin/bash -c \'rm -f {}/keystore/*\''.format(namespace, pod_name, CHAIN_BASE_PATH)

@@ -32,8 +32,11 @@ OPERATOR_HEALTHY = Gauge("operator_healthy", 'check if the operator is healthy')
 UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current unhealthy validators')
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
 
-logging.basicConfig(level=logging.WARN)
-
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s %(message)s",
+    datefmt="%d/%b/%Y %H:%M:%S",
+    stream=sys.stderr)
 
 # def eprint(*args, **kwargs):
 #     print(*args, file=sys.stderr, **kwargs)
@@ -602,6 +605,9 @@ def flask_metrics():
 if __name__ == '__main__':
     try:
         MAIN_THREAD.start()
+        # FLASK_APP.logger.disabled = True
+        logger_werkzeug = logging.getLogger('werkzeug')
+        logger_werkzeug.disabled = True
         FLASK_APP.run(host='0.0.0.0', port=8080)
     except Exception:
         logging.warning(traceback.format_exc())

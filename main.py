@@ -89,7 +89,7 @@ def run_cmd_until_ok(cmd, timeout=60):
 
 def http_get(url):
     try:
-        r = requests.get(url)
+        r = requests.get(url, timeout=3)
         return r.text
     except:
         pass

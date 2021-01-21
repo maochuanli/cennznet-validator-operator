@@ -427,8 +427,11 @@ def loop_work():
                 healthy_record['state'] = 'staking'
                 session_key = healthy_record['session_key'] = record['session_key']
                 record['session_key'] = ""
+                old_namespace, old_pod_name = record[
+                                                  'namespace'], record['pod_name']
                 namespace, pod_name, pod_ip = healthy_record[
-                                                  'namespace'], healthy_record['pod_name'], healthy_record['pod_ip'],
+                                                  'namespace'], healthy_record['pod_name'], healthy_record['pod_ip']
+                logging.warning('transfer session key from {}/{} to {}/{}'.format(old_namespace, old_pod_name, namespace, pod_name))
                 insert_keys(namespace, pod_name, session_key)
 
         if need_save_secret is True:

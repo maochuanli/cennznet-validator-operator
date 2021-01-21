@@ -394,14 +394,16 @@ def loop_work():
             if record['state'] == 'staking' and record['healthy'] is False:
                 logging.warning(
                     '{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
-
+                pod_ip = record['pod_ip']
+                if pod_ip is None or len(pod_ip) <= 0:
+                    logging.error('{}/{} is not running, cannot remove the key from it'.format(namespace, pod_name))
+                    continue
                 # make sure there is no key files left
                 rc, out = remove_session_keys(namespace, pod_name)
                 if rc != 0:
                     logging.error('failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace,
                                                                                                            pod_name))
                     continue
-                time.sleep(5)
 
                 logging.warning('need to kill the pod to force it to restart...{}/{}'.format(namespace, pod_name))
                 kill_pod(namespace, pod_name)

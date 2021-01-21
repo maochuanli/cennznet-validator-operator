@@ -371,6 +371,7 @@ def insert_keys(namespace, pod_name, node_session_key):
         logging.warning('{}/{} got the new session key'.format(namespace, pod_name))
         restart_granpa_voting(namespace, pod_name)
 
+
 def remove_session_keys(namespace, pod_name):
     cmd = 'kubectl exec -n {} {} -- /bin/bash -c \'rm -f {}/keystore/*\''.format(namespace, pod_name, CHAIN_BASE_PATH)
     return run_cmd_until_ok(cmd, timeout=30)

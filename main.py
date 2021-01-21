@@ -33,14 +33,10 @@ UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current un
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] %(levelname)s %(message)s",
+    level=logging.WARN,
+    format="[%(asctime)s] %(message)s",
     datefmt="%d/%b/%Y %H:%M:%S",
     stream=sys.stderr)
-
-# def eprint(*args, **kwargs):
-#     print(*args, file=sys.stderr, **kwargs)
-#     sys.stderr.flush()
 
 
 def get_pod_in_namespace(namespace, pod_name):
@@ -80,7 +76,7 @@ def run_cmd(cmd):
     if process.returncode != 0:
         logging.warning('{},{}'.format(process.returncode, result_txt))
     else:
-        logging.info('{},{}'.format(process.returncode, result_txt))
+        logging.debug('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt
 
 
@@ -552,11 +548,8 @@ def main_thread():
             sys.exit(-100)
 
         while True:
-            now_dt = datetime.datetime.now()
-            dt_format = "%Y-%m-%d %H:%M:%S"
-            logging.info('-----------------{}------------------'.format(now_dt.strftime(dt_format)))
             loop_work()
-            time.sleep(30)
+            time.sleep(10)
     except Exception:
         logging.warning(traceback.format_exc())
 

@@ -577,8 +577,8 @@ if __name__ == '__main__':
 
         logging.basicConfig(
             level=log_level,
-            format="[%(asctime)s] %(message)s",
-            datefmt="%d/%b/%Y %H:%M:%S",
+            format="%(asctime)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
             stream=sys.stderr)
 
         MAIN_THREAD.start()

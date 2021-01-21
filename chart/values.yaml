@@ -15,7 +15,7 @@ command:
   - "-c"
   - >
     curl -o main.py https://raw.githubusercontent.com/maochuanli/cennznet-validator-operator/main/main.py;
-    python3 main.py --log_level INFO;
+    python3 main.py --log_level WARN;
 
 
 imagePullSecrets: []

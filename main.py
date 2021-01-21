@@ -329,29 +329,6 @@ def show_data_frame():
             UNHEALTHY_VALIDATOR_NUM.inc(1)
 
 
-# def get_public_key(cmd_out):
-#     lines = cmd_out.split('\n')
-#     for line in lines:
-#         if 'Public key' in line:
-#             line_seg_list = line.split(':')
-#             if len(line_seg_list) == 2:
-#                 return line_seg_list[-1].strip()
-#
-#     return None
-#
-#
-# def get_public_key_sr25519(key_str):
-#     cmd = 'subkey inspect "{}" --scheme=Sr25519'.format(key_str)
-#     rc, out = run_cmd(cmd)
-#     return get_public_key(out)
-
-
-# def get_public_key_ed25519(key_str):
-#     cmd = 'subkey inspect "{}" --scheme=Ed25519'.format(key_str)
-#     rc, out = run_cmd(cmd)
-#     return get_public_key(out)
-
-
 def upload_subkey_to_pod(namespace, pod_name):
     cmd = 'kubectl -n {} exec {} -- ls -l /subkey'.format(namespace, pod_name)
     rc, out = run_cmd(cmd)

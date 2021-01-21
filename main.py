@@ -352,7 +352,7 @@ def insert_keys(namespace, pod_name, node_session_key):
 
 def remove_session_keys(namespace, pod_name):
     cmd = 'kubectl exec -n {} {} -- /bin/bash -c \'rm -f {}/keystore/*\''.format(namespace, pod_name, CHAIN_BASE_PATH)
-    return run_cmd_until_ok(cmd)
+    return run_cmd_until_ok(cmd, timeout=30)
 
 
 def kill_pod(namespace, pod_name):
@@ -392,12 +392,14 @@ def loop_work():
                 continue
             namespace, pod_name = record['namespace'], record['pod_name']
             if record['state'] == 'staking' and record['healthy'] is False:
-                logging.warning(
-                    '{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
                 pod_ip = record['pod_ip']
                 if pod_ip is None or len(pod_ip) <= 0:
                     logging.error('{}/{} is not running, cannot remove the key from it'.format(namespace, pod_name))
                     continue
+
+                logging.warning(
+                    '{}/{} is unhealthy, need to remove the session key from it....'.format(namespace, pod_name))
+
                 # make sure there is no key files left
                 rc, out = remove_session_keys(namespace, pod_name)
                 if rc != 0:

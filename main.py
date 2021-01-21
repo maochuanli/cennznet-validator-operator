@@ -321,9 +321,11 @@ def show_data_frame():
 
 
 def upload_subkey_to_pod(namespace, pod_name):
-    cmd = 'kubectl -n {} exec {} -- ls -l /subkey'.format(namespace, pod_name)
-    rc, out = run_cmd(cmd)
-    if 'No such file or directory' in out or rc != 0:
+    kube_cmd = 'ls -l /subkey && echo HELLOWORLD'
+    out = run_cmd_in_namespaced_pod(namespace, pod_name, kube_cmd)
+    # cmd = 'kubectl -n {} exec {} -- ls -l /subkey'.format(namespace, pod_name)
+    # rc, out = run_cmd(cmd)
+    if 'HELLOWORLD' not in out:
         cmd = 'which subkey'
         rc, out = run_cmd(cmd)
         cmd = 'kubectl -n {} cp {} {}:/subkey'.format(

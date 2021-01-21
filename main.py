@@ -19,6 +19,7 @@ from prometheus_client import Gauge
 from flask import Response, Flask
 from threading import Thread
 import logging
+import argparse
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
@@ -31,12 +32,6 @@ API_INSTANCE = None
 OPERATOR_HEALTHY = Gauge("operator_healthy", 'check if the operator is healthy')
 UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current unhealthy validators')
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
-
-logging.basicConfig(
-    level=logging.WARN,
-    format="[%(asctime)s] %(message)s",
-    datefmt="%d/%b/%Y %H:%M:%S",
-    stream=sys.stderr)
 
 
 def get_pod_in_namespace(namespace, pod_name):
@@ -574,6 +569,18 @@ def flask_metrics():
 
 if __name__ == '__main__':
     try:
+        parser = argparse.ArgumentParser(
+            description='Dynamically manage the validator session keys in the current kubernetes cluster')
+        parser.add_argument('-l', '--log_level', help='logger level')
+        args = parser.parse_args()
+        log_level = getattr(args, 'log_level')
+
+        logging.basicConfig(
+            level=log_level,
+            format="[%(asctime)s] %(message)s",
+            datefmt="%d/%b/%Y %H:%M:%S",
+            stream=sys.stderr)
+
         MAIN_THREAD.start()
         # FLASK_APP.logger.disabled = True
         logger_werkzeug = logging.getLogger('werkzeug')

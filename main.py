@@ -321,7 +321,7 @@ def show_data_frame():
     df = pd.DataFrame(CURRENT_SECRET_OBJ, columns=[
         'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized',
         'substrate_block_height_sync_target', 'state', 'healthy', 'tainted'])
-    logging.warning('\n' + df)
+    logging.warning('\n' + str(df))
 
     UNHEALTHY_VALIDATOR_NUM.set(0)
     for record in CURRENT_SECRET_OBJ:

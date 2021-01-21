@@ -571,7 +571,7 @@ if __name__ == '__main__':
     try:
         parser = argparse.ArgumentParser(
             description='Dynamically manage the validator session keys in the current kubernetes cluster')
-        parser.add_argument('-l', '--log_level', help='logger level')
+        parser.add_argument('-l', '--log_level', default='INFO', help='logger level')
         args = parser.parse_args()
         log_level = getattr(args, 'log_level')
 

@@ -346,10 +346,14 @@ def insert_key_type(namespace, pod_name, key_type, node_session_key, keyscheme='
 
 def insert_keys(namespace, pod_name, node_session_key):
     rc = insert_key_type(namespace, pod_name, 'audi', node_session_key)
-    rc = insert_key_type(namespace, pod_name, 'babe', node_session_key)
-    rc = insert_key_type(namespace, pod_name, 'imon', node_session_key)
-    rc = insert_key_type(namespace, pod_name, 'gran', node_session_key, 'Ed25519')
+    rc2 = insert_key_type(namespace, pod_name, 'babe', node_session_key)
+    rc3 = insert_key_type(namespace, pod_name, 'imon', node_session_key)
+    rc4 = insert_key_type(namespace, pod_name, 'gran', node_session_key, 'Ed25519')
     SWAP_VALIDATOR_COUNT.inc(1)
+    if (rc + rc2 + rc3 + rc4) > 0:
+        logging.error('failed to insert session key to {}/{}'.format(namespace, pod_name))
+    else:
+        logging.warning('{}/{} got the new session key'.format(namespace, pod_name))
 
 
 def remove_session_keys(namespace, pod_name):
@@ -522,7 +526,6 @@ def verify_session_keys_on_nodes():
                             '{}/{} session key in file: {}'.format(namespace, pod_name, file_name))
             else:
                 logging.error('{}/{} session keys files not complete length: {} '.format(namespace, pod_name, len(lines)))
-                logging.error(out)
                 record['tainted'] = True
                 any_wrong = True
                 continue

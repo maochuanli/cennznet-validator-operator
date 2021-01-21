@@ -32,7 +32,7 @@ API_INSTANCE = None
 OPERATOR_HEALTHY = Gauge("operator_healthy", 'check if the operator is healthy')
 UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current unhealthy validators')
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
-
+TAINT_VALIDATOR_COUNT = Gauge("tainted_validator_count", 'number of tainted validators')
 
 def get_pod_in_namespace(namespace, pod_name):
     try:
@@ -315,9 +315,12 @@ def show_data_frame():
     logging.warning('\n' + str(df))
 
     UNHEALTHY_VALIDATOR_NUM.set(0)
+    TAINT_VALIDATOR_COUNT.set(0)
     for record in CURRENT_SECRET_OBJ:
         if record.get('healthy') is False:
             UNHEALTHY_VALIDATOR_NUM.inc(1)
+        if record.get('tainted') is True:
+            TAINT_VALIDATOR_COUNT.inc(1)
 
 
 def upload_subkey_to_pod(namespace, pod_name):

@@ -210,13 +210,12 @@ def convert_object_2_json(python_object):
 
 
 def get_pod_ip(namespace, pod_name):
-    for i in range(3):
-        pod_obj = get_pod_in_namespace(namespace, pod_name)
-        if pod_obj:
-            pod_ip = pod_obj.status.pod_ip
-            if pod_ip:
-                return pod_ip
-        time.sleep(5)
+    pod_obj = get_pod_in_namespace(namespace, pod_name)
+    if pod_obj:
+        pod_ip = pod_obj.status.pod_ip
+        if pod_ip:
+            return pod_ip
+
 
 
 # def get_pod_restart_count(namespace, pod_name):

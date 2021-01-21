@@ -55,7 +55,8 @@ def run_cmd_in_namespaced_pod(namespace, pod_name, cmd):
                            command=exec_command,
                            stderr=True, stdin=False,
                            stdout=True, tty=False)
-        # print("Response: " + resp)
+        logging.info('pod exec cmd: ' + cmd)
+        logging.debug(resp)
         return resp
     except Exception:
         logging.warning(traceback.format_exc())
@@ -209,13 +210,13 @@ def get_pod_ip_real(namespace, pod_name):
 
 
 def get_pod_ip(namespace, pod_name):
-    for i in range(10):
+    for i in range(3):
         pod_obj = get_pod_in_namespace(namespace, pod_name)
         if pod_obj:
             pod_ip = pod_obj.status.pod_ip
             if pod_ip:
                 return pod_ip
-        time.sleep(6)
+        time.sleep(5)
 
 
 # def get_pod_restart_count(namespace, pod_name):

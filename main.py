@@ -32,6 +32,7 @@ API_INSTANCE = None
 OPERATOR_HEALTHY = Gauge("operator_healthy", 'check if the operator is healthy')
 UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current unhealthy validators')
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
+RESTART_GRANPA_COUNT = Gauge("restart_granpa_count", 'number of restarting validators granpa voting session')
 TAINT_VALIDATOR_COUNT = Gauge("tainted_validator_count", 'number of tainted validators')
 
 def get_pod_in_namespace(namespace, pod_name):
@@ -362,6 +363,8 @@ def restart_granpa_voting(namespace, pod_name):
     logging.info('{}/{} curl is available'.format(namespace, pod_name))
     curl_out = run_cmd_in_namespaced_pod(namespace, pod_name, restart_cmd.strip())
     logging.warning(curl_out)
+    if 'error' not in curl_out:
+        RESTART_GRANPA_COUNT.inc(1)
 
 
 def insert_keys(namespace, pod_name, node_session_key):

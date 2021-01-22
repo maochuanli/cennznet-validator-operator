@@ -71,7 +71,7 @@ def run_cmd(cmd):
     result = process.communicate()[0]
     result_txt = result.decode()
     if process.returncode != 0:
-        logging.warning('{},{}'.format(process.returncode, result_txt))
+        logging.warning('{},{},{}'.format(process.returncode, cmd, result_txt))
     else:
         logging.debug('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt

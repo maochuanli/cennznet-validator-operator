@@ -358,12 +358,12 @@ def restart_granpa_voting(namespace, pod_name):
         logging.info('{}/{} has curl installed!!!'.format(namespace, pod_name))
 
     restart_cmd = '''
-            curl -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "method":"grandpa_restartVoter", "params":[], "id": 1 }' http://localhost:9933
+            curl -s -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "method":"grandpa_restartVoter", "params":[], "id": 1 }' http://localhost:9933
             '''
     logging.info('{}/{} curl is available'.format(namespace, pod_name))
     curl_out = run_cmd_in_namespaced_pod(namespace, pod_name, restart_cmd.strip())
     logging.warning(curl_out)
-    if 'error' not in curl_out:
+    if 'jsonrpc' in curl_out and 'error' not in curl_out:
         RESTART_GRANPA_COUNT.inc(1)
 
 

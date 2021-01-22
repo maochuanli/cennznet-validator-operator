@@ -348,19 +348,20 @@ def insert_key_type(namespace, pod_name, key_type, node_session_key, keyscheme='
 
 
 def restart_granpa_voting(namespace, pod_name):
-    cmd = 'kubectl -n {} exec {} -- /bin/bash -c \'apt update; apt install -y curl\''.format(namespace, pod_name)
-    rc, out = run_cmd_until_ok(cmd)
     cmd = 'kubectl -n {} exec {} -- which curl'.format(namespace, pod_name)
     rc, out = run_cmd(cmd)
-    if rc == 0 and 'not found' not in out:
-        restart_cmd = '''
-        curl -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "method":"grandpa_restartVoter", "params":[], "id": 1 }' http://localhost:9933
-        '''
-        logging.info('{}/{} curl is available'.format(namespace, pod_name))
-        curl_out = run_cmd_in_namespaced_pod(namespace, pod_name, restart_cmd.strip())
-        logging.warning(curl_out)
+    if rc != 0 or 'not found' in out:
+        cmd = 'kubectl -n {} exec {} -- /bin/bash -c \'apt update; apt install -y curl\''.format(namespace, pod_name)
+        rc, out = run_cmd_until_ok(cmd)
     else:
-        logging.error('{}/{} has no curl executable!!!'.format(namespace, pod_name))
+        logging.info('{}/{} has curl installed!!!'.format(namespace, pod_name))
+
+    restart_cmd = '''
+            curl -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "method":"grandpa_restartVoter", "params":[], "id": 1 }' http://localhost:9933
+            '''
+    logging.info('{}/{} curl is available'.format(namespace, pod_name))
+    curl_out = run_cmd_in_namespaced_pod(namespace, pod_name, restart_cmd.strip())
+    logging.warning(curl_out)
 
 
 def insert_keys(namespace, pod_name, node_session_key):

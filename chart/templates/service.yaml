@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: validators-operator
+    prometheus: "true"
+  name: validator-operator-metrics
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8080
+  selector:
+    statefulset.kubernetes.io/pod-name: operator-release-operator-chart-0
+

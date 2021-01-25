@@ -31,7 +31,18 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: "cennznet-validator-operator-service-account"
 
-podAnnotations: {}
+podAnnotations:
+  debug: true
+
+pod_annotation:
+  - name: prometheus.io/scrape
+    value: "true"
+  - name: prometheus.io/path
+    value: "/metrics"
+  - name: prometheus.io/port
+    value: "9615"
+  - name: prometheus.io/scheme
+    value: "http"
 
 podSecurityContext: {}
   # fsGroup: 2000

@@ -667,6 +667,7 @@ def sendsms(mobile_num, text):
     else:
         logging.warning('no sms secret found, cannot send sms text')
 
+
 if __name__ == '__main__':
     try:
         parser = argparse.ArgumentParser(

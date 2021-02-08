@@ -612,7 +612,7 @@ def sendsms_text(mobile_number):
     if flask_request.content_type != 'application/json':
         return "BAD", 400
     content = flask_request.get_json(silent=True)
-    print(content)
+    logging.warning(f'receive sms request: {content}')
     return 'OK %s' % mobile_number
 
 

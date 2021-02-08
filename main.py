@@ -16,7 +16,7 @@ from kubernetes.client.api import core_v1_api
 from kubernetes.stream import stream as kube_stream
 import prometheus_client
 from prometheus_client import Gauge
-from flask_webserver import Response, Flask
+from flask import Response, Flask
 from flask import request as flask_request
 from threading import Thread
 import logging

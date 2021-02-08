@@ -1,4 +1,3 @@
-from prometheus_client import start_http_server
 import os
 import sys
 import time

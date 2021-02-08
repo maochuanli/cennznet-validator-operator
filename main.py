@@ -23,6 +23,7 @@ import argparse
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
+SMS_SECRET_NAME = 'operator-sms-secret'
 SECRET_FILE_NAME = '/tmp/secret.json'
 CURRENT_SECRET_OBJ = None
 CURRENT_SECRET_OBJ_BACKUP = None
@@ -107,6 +108,13 @@ def http_get(url):
 #     else:
 #         logging.warning(response)
 #     return False
+
+def get_secret_json_obj(namespace, secret_name):
+    cmd = 'kubectl get secret {} -n {} -o json'.format(
+        secret_name, namespace)
+    rc, out = run_cmd(cmd)
+    json_obj = convert_json_2_object(out)
+    return json_obj
 
 
 def get_current_secret_as_str():
@@ -633,7 +641,7 @@ def flask_metrics():
 }
 '''
 @FLASK_APP.route('/sendsms/<mobile_number>', methods=['POST'])
-def sendsms_text(mobile_number):
+def sendsms_text_route(mobile_number):
     if flask_request.content_type != 'application/json':
         return "BAD", 400
 
@@ -642,11 +650,22 @@ def sendsms_text(mobile_number):
         alert_title = content['title']
         alert_message = content['message']
         logging.warning(f'sms request: {mobile_number}, {alert_title}, {alert_message}')
+        sendsms(mobile_number, f'{alert_title}-{alert_message}')
     except Exception:
         logging.warning(traceback.format_exc())
 
     return 'OK %s' % mobile_number
 
+
+def sendsms(mobile_num, text):
+    json_obj = get_secret_json_obj(CURRENT_NAMESPACE, SMS_SECRET_NAME)
+    if json_obj:
+        username = convert_base64_2_str(json_obj['data']['username'])
+        password = convert_base64_2_str(json_obj['data']['password'])
+        logging.warning(f'sms secret {username}, {password}')
+        logging.warning(f'{mobile_num} {text}')
+    else:
+        logging.warning('no sms secret found, cannot send sms text')
 
 if __name__ == '__main__':
     try:

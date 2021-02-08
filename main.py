@@ -36,6 +36,7 @@ SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validat
 RESTART_GRANPA_COUNT = Gauge("restart_granpa_count", 'number of restarting validators granpa voting session')
 TAINT_VALIDATOR_COUNT = Gauge("tainted_validator_count", 'number of tainted validators')
 
+
 def get_pod_in_namespace(namespace, pod_name):
     try:
         pod_obj = API_INSTANCE.read_namespaced_pod(namespace=namespace, name=pod_name)
@@ -217,7 +218,6 @@ def get_pod_ip(namespace, pod_name):
         pod_ip = pod_obj.status.pod_ip
         if pod_ip:
             return pod_ip
-
 
 
 # def get_pod_restart_count(namespace, pod_name):
@@ -435,8 +435,9 @@ def loop_work():
                 # make sure there is no key files left
                 rc, out = remove_session_keys(namespace, pod_name)
                 if rc != 0:
-                    logging.error('failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace,
-                                                                                                           pod_name))
+                    logging.error(
+                        'failed to delete the keystore directory on pod {}/{}, skip swapping it'.format(namespace,
+                                                                                                        pod_name))
                     continue
 
                 logging.warning('need to kill the pod to force it to restart...{}/{}'.format(namespace, pod_name))
@@ -466,7 +467,8 @@ def loop_work():
                                                   'namespace'], record['pod_name']
                 namespace, pod_name, pod_ip = healthy_record[
                                                   'namespace'], healthy_record['pod_name'], healthy_record['pod_ip']
-                logging.warning('transfer session key from {}/{} to {}/{}'.format(old_namespace, old_pod_name, namespace, pod_name))
+                logging.warning(
+                    'transfer session key from {}/{} to {}/{}'.format(old_namespace, old_pod_name, namespace, pod_name))
                 insert_keys(namespace, pod_name, session_key)
 
         if need_save_secret is True:
@@ -551,7 +553,8 @@ def verify_session_keys_on_nodes():
                         logging.info(
                             '{}/{} session key in file: {}'.format(namespace, pod_name, file_name))
             else:
-                logging.error('{}/{} session keys files not complete length: {} '.format(namespace, pod_name, len(lines)))
+                logging.error(
+                    '{}/{} session keys files not complete length: {} '.format(namespace, pod_name, len(lines)))
                 record['tainted'] = True
                 any_wrong = True
                 continue
@@ -604,13 +607,15 @@ def flask_root():
 def flask_metrics():
     return Response(prometheus_client.generate_latest(), mimetype="text/plain")
 
-@FLASK_APP.route('/sendsms/<mobile_number>',methods = ['POST'])
+
+@FLASK_APP.route('/sendsms/<mobile_number>', methods=['POST'])
 def sendsms_text(mobile_number):
     if flask_request.content_type != 'application/json':
         return "BAD", 400
     content = flask_request.get_json(silent=True)
     print(content)
     return 'OK %s' % mobile_number
+
 
 if __name__ == '__main__':
     try:

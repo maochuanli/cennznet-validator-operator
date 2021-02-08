@@ -16,7 +16,8 @@ from kubernetes.client.api import core_v1_api
 from kubernetes.stream import stream as kube_stream
 import prometheus_client
 from prometheus_client import Gauge
-from flask import Response, Flask
+from flask_webserver import Response, Flask
+from flask import request as flask_request
 from threading import Thread
 import logging
 import argparse
@@ -603,6 +604,13 @@ def flask_root():
 def flask_metrics():
     return Response(prometheus_client.generate_latest(), mimetype="text/plain")
 
+@FLASK_APP.route('/sendsms/<mobile_number>',methods = ['POST'])
+def sendsms_text(mobile_number):
+    if flask_request.content_type != 'application/json':
+        return "BAD", 400
+    content = flask_request.get_json(silent=True)
+    print(content)
+    return 'OK %s' % mobile_number
 
 if __name__ == '__main__':
     try:

@@ -606,7 +606,32 @@ def flask_root():
 def flask_metrics():
     return Response(prometheus_client.generate_latest(), mimetype="text/plain")
 
-
+'''
+{
+    "dashboardId": 1,
+    "evalMatches": [
+        {
+            "value": 100,
+            "metric": "High value",
+            "tags": null
+        },
+        {
+            "value": 200,
+            "metric": "Higher Value",
+            "tags": null
+        }
+    ],
+    "message": "Someone is testing the alert notification within grafana.",
+    "orgId": 0,
+    "panelId": 1,
+    "ruleId": 0,
+    "ruleName": "Test notification",
+    "ruleUrl": "http://localhost:3000/",
+    "state": "alerting",
+    "tags": {},
+    "title": "[Alerting] Test notification"
+}
+'''
 @FLASK_APP.route('/sendsms/<mobile_number>', methods=['POST'])
 def sendsms_text(mobile_number):
     if flask_request.content_type != 'application/json':

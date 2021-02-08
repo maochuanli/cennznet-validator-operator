@@ -636,8 +636,15 @@ def flask_metrics():
 def sendsms_text(mobile_number):
     if flask_request.content_type != 'application/json':
         return "BAD", 400
-    content = flask_request.get_json(silent=True)
-    logging.warning(f'receive sms request: {content}')
+
+    try:
+        content = flask_request.get_json(silent=True)
+        alert_title = content['title']
+        alert_message = content['message']
+        logging.warning(f'sms request: {mobile_number}, {alert_title}, {alert_message}')
+    except Exception:
+        logging.warning(traceback.format_exc())
+
     return 'OK %s' % mobile_number
 
 

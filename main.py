@@ -196,14 +196,14 @@ def convert_json_2_object(json_str):
     try:
         return json.loads(json_str)
     except Exception:
-        logging.warning(traceback.format_exc())
+        logging.info(traceback.format_exc())
 
 
 def convert_object_2_json(python_object):
     try:
         return json.dumps(python_object)
     except Exception:
-        logging.warning(traceback.format_exc())
+        logging.info(traceback.format_exc())
 
 
 # def get_pod_ip_real(namespace, pod_name):
@@ -319,7 +319,7 @@ def show_data_frame():
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
     df = pd.DataFrame(CURRENT_SECRET_OBJ, columns=[
-        'namespace', 'pod_name', 'pod_ip', 'substrate_block_height_best', 'substrate_block_height_finalized',
+        'namespace', 'pod_name', 'node_type', 'substrate_block_height_best', 'substrate_block_height_finalized',
         'substrate_block_height_sync_target', 'state', 'healthy', 'tainted'])
     logging.warning('\n' + str(df))
 
@@ -414,7 +414,7 @@ def loop_work():
         update_node_status(best, finalized, sync_target)
 
         suspended_records = []
-        idle_healthy_records = []
+        idle_healthy_validator_records = []
 
         # verify the current setup
         verify_session_keys_on_nodes()
@@ -453,27 +453,28 @@ def loop_work():
                 record['state'] = 'suspension'
                 suspended_records.append(record)
             elif record['state'] == 'idle' and record['healthy'] is True:
-                idle_healthy_records.append(record)
+                if 'validator' == record['node_type']:
+                    idle_healthy_validator_records.append(record)
 
         need_save_secret = False
         if len(suspended_records) > 0:
             need_save_secret = True
 
         for record in suspended_records:
-            if len(idle_healthy_records) <= 0:
+            if len(idle_healthy_validator_records) <= 0:
                 logging.warning('no healthy idle validator to swap to!!!')
                 break
 
-            healthy_record = idle_healthy_records.pop()
-            if healthy_record:
+            healthy_validator_record = idle_healthy_validator_records.pop()
+            if healthy_validator_record:
                 record['state'] = 'idle'
-                healthy_record['state'] = 'staking'
-                session_key = healthy_record['session_key'] = record['session_key']
+                healthy_validator_record['state'] = 'staking'
+                session_key = healthy_validator_record['session_key'] = record['session_key']
                 record['session_key'] = ""
                 old_namespace, old_pod_name = record[
                                                   'namespace'], record['pod_name']
-                namespace, pod_name, pod_ip = healthy_record[
-                                                  'namespace'], healthy_record['pod_name'], healthy_record['pod_ip']
+                namespace, pod_name, pod_ip = healthy_validator_record[
+                                                  'namespace'], healthy_validator_record['pod_name'], healthy_validator_record['pod_ip']
                 logging.warning(
                     'transfer session key from {}/{} to {}/{}'.format(old_namespace, old_pod_name, namespace, pod_name))
                 insert_keys(namespace, pod_name, session_key)
@@ -613,59 +614,6 @@ def flask_root():
 @FLASK_APP.route("/metrics")
 def flask_metrics():
     return Response(prometheus_client.generate_latest(), mimetype="text/plain")
-
-'''
-{
-    "dashboardId": 1,
-    "evalMatches": [
-        {
-            "value": 100,
-            "metric": "High value",
-            "tags": null
-        },
-        {
-            "value": 200,
-            "metric": "Higher Value",
-            "tags": null
-        }
-    ],
-    "message": "Someone is testing the alert notification within grafana.",
-    "orgId": 0,
-    "panelId": 1,
-    "ruleId": 0,
-    "ruleName": "Test notification",
-    "ruleUrl": "http://localhost:3000/",
-    "state": "alerting",
-    "tags": {},
-    "title": "[Alerting] Test notification"
-}
-'''
-@FLASK_APP.route('/sendsms/<mobile_number>', methods=['POST'])
-def sendsms_text_route(mobile_number):
-    if flask_request.content_type != 'application/json':
-        return "BAD", 400
-
-    try:
-        content = flask_request.get_json(silent=True)
-        alert_title = content['title']
-        alert_message = content['message']
-        logging.warning(f'sms request: {mobile_number}, {alert_title}, {alert_message}')
-        sendsms(mobile_number, f'{alert_title}-{alert_message}')
-    except Exception:
-        logging.warning(traceback.format_exc())
-
-    return 'OK %s' % mobile_number
-
-
-def sendsms(mobile_num, text):
-    json_obj = get_secret_json_obj(CURRENT_NAMESPACE, SMS_SECRET_NAME)
-    if json_obj:
-        username = convert_base64_2_str(json_obj['data']['username'])
-        password = convert_base64_2_str(json_obj['data']['password'])
-        logging.warning(f'sms secret {username}, {password}')
-        logging.warning(f'{mobile_num} {text}')
-    else:
-        logging.warning('no sms secret found, cannot send sms text')
 
 
 if __name__ == '__main__':

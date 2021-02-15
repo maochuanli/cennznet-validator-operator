@@ -283,10 +283,10 @@ def update_node_status(best, finalized, sync_target):
             else:
                 record['healthy'] = True
             if 'validator' != record['node_type'] and record['healthy'] is False:
-                current_best = record.get('substrate_block_height_best', 0)
-                prev_best = record.get('prev_best', 0)
-                curent_finalized = record.get('substrate_block_height_finalized', 0)
-                prev_finalized = record.get('prev_finalized', 0)
+                current_best = int(record.get('substrate_block_height_best', 0))
+                prev_best = int(record.get('prev_best', 0))
+                curent_finalized = int(record.get('substrate_block_height_finalized', 0))
+                prev_finalized = int(record.get('prev_finalized', 0))
                 if (current_best - prev_best) > 6 and (curent_finalized - prev_finalized) > 6:
                     record['healthy'] = True
 

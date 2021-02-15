@@ -32,6 +32,8 @@ API_INSTANCE = None
 
 OPERATOR_HEALTHY = Gauge("operator_healthy", 'check if the operator is healthy')
 UNHEALTHY_VALIDATOR_NUM = Gauge("unhealthy_validator_num", 'number of current unhealthy validators')
+UNHEALTHY_BOOTNODE_NUM = Gauge("unhealthy_bootnode_num", 'number of current unhealthy boot nodes')
+UNHEALTHY_FULLNODE_NUM = Gauge("unhealthy_fullnode_num", 'number of current unhealthy full nodes')
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
 RESTART_GRANPA_COUNT = Gauge("restart_granpa_count", 'number of restarting validators granpa voting session')
 TAINT_VALIDATOR_COUNT = Gauge("tainted_validator_count", 'number of tainted validators')
@@ -331,13 +333,20 @@ def show_data_frame():
     logging.warning('\n' + str(df))
 
     UNHEALTHY_VALIDATOR_NUM.set(0)
+    UNHEALTHY_BOOTNODE_NUM.set(0)
+    UNHEALTHY_FULLNODE_NUM.set(0)
     TAINT_VALIDATOR_COUNT.set(0)
     for record in CURRENT_SECRET_OBJ:
-        if record.get('healthy') is False:
-            UNHEALTHY_VALIDATOR_NUM.inc(1)
         if record.get('tainted') is True:
             TAINT_VALIDATOR_COUNT.inc(1)
 
+        if record.get('healthy') is False:
+            if 'validator' == record['node_type']:
+                UNHEALTHY_VALIDATOR_NUM.inc(1)
+            elif 'bootnode' == record['node_type']:
+                UNHEALTHY_BOOTNODE_NUM.inc(1)
+            elif 'fullnode' == record['node_type']:
+                UNHEALTHY_FULLNODE_NUM.inc(1)
 
 def upload_subkey_to_pod(namespace, pod_name):
     kube_cmd = 'ls -l /subkey && echo HELLOWORLD'

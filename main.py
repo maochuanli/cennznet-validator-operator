@@ -521,6 +521,8 @@ def verify_session_keys_on_nodes():
     any_wrong = False
     if CURRENT_SECRET_OBJ and len(CURRENT_SECRET_OBJ) > 0:
         for record in CURRENT_SECRET_OBJ:
+            if 'validator' != record['node_type']:
+                continue
             namespace, pod_name, pod_ip, session_key = record['namespace'], record['pod_name'], record['pod_ip'], \
                                                        record['session_key']
             if pod_ip is None:

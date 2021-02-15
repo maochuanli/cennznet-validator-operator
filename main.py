@@ -282,6 +282,13 @@ def update_node_status(best, finalized, sync_target):
                 record['healthy'] = False
             else:
                 record['healthy'] = True
+            if 'validator' != record['node_type'] and record['healthy'] is False:
+                current_best = record.get('substrate_block_height_best', 0)
+                prev_best = record.get('prev_best', 0)
+                curent_finalized = record.get('substrate_block_height_finalized', 0)
+                prev_finalized = record.get('prev_finalized', 0)
+                if (current_best - prev_best) > 6 and (curent_finalized - prev_finalized) > 6:
+                    record['healthy'] = True
 
 
 def extract_pods_metrics():
@@ -481,8 +488,11 @@ def loop_work():
                     'transfer session key from {}/{} to {}/{}'.format(old_namespace, old_pod_name, namespace, pod_name))
                 insert_keys(namespace, pod_name, session_key)
 
-        if need_save_secret is True:
-            create_update_operator_secret(CURRENT_SECRET_OBJ)
+        for record in CURRENT_SECRET_OBJ:
+            record['prev_best'] =        record['substrate_block_height_best']
+            record['prev_finalized'] =   record['substrate_block_height_finalized']
+            record['prev_sync_target'] = record['substrate_block_height_sync_target']
+        create_update_operator_secret(CURRENT_SECRET_OBJ)
 
     # reset secret obj
     CURRENT_SECRET_OBJ = None

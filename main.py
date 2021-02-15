@@ -426,6 +426,8 @@ def loop_work():
                 return
 
         for record in CURRENT_SECRET_OBJ:
+            if 'validator' != record['node_type']:
+                continue
             if record['state'] == 'suspension':
                 suspended_records.append(record)
                 continue

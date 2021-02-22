@@ -414,6 +414,35 @@ def kill_pod(namespace, pod_name):
     cmd = 'kubectl delete pod -n {} {}'.format(namespace, pod_name)
     rc, out = run_cmd_until_ok(cmd)
 
+def convert_str_2_date(date_time_str):
+    try:
+        date_time_obj = datetime.datetime.strptime(date_time_str, '%d/%m/%Y %H:%M')
+        return date_time_obj
+    except:
+        print('cannot parse:', date_time_str)
+    return datetime.datetime(1970, 1, 1, 0, 0)
+
+def convert_date_2_str(dateobj):
+    dt_str = dateobj.strftime('%d/%m/%Y %H:%M')
+    return dt_str
+
+def restart_stalled_node_if_nessesary(record):
+    node_type = record['node_type']
+    if node_type not in ('bootnode', 'fullnode'):
+        logging.warning(f'node type {node_type} is not recognized!')
+        return
+    healthy = record['healthy']
+    if healthy is True:
+        return
+    prev_restart_dt_str = record.get('restart_datetime', '01/01/1970 00:00')
+    prev_restart_dt = convert_str_to_datetime(prev_restart_dt_str)
+    now = datetime.datetime.now()
+    max_interval = datetime.timedelta(minutes=20)
+    if (now - prev_restart_dt) > max_interval:
+        record['restart_datetime'] = convert_date_2_str(now)
+        namespace, pod_name = record['namespace'], record['pod_name']
+        kill_pod(name_space, pod_name)
+
 
 def loop_work():
     global CURRENT_SECRET_OBJ
@@ -443,7 +472,7 @@ def loop_work():
 
         for record in CURRENT_SECRET_OBJ:
             if 'validator' != record['node_type']:
-                continue
+                restart_stalled_node_if_nessesary(record)
             if record['state'] == 'suspension':
                 suspended_records.append(record)
                 continue

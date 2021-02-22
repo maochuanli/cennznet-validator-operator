@@ -469,6 +469,7 @@ def loop_work():
 
         suspended_records = []
         idle_healthy_validator_records = []
+        boot_full_node_records = []
 
         # verify the current setup
         verify_session_keys_on_nodes()
@@ -480,8 +481,14 @@ def loop_work():
                 return
 
         for record in CURRENT_SECRET_OBJ:
-            if 'validator' != record['node_type']:
-                restart_stalled_node_if_nessesary(record)
+            node_type = record['node_type']
+            if node_type in ('bootnode', 'fullnode'):
+                boot_full_node_records.append(record)
+                continue
+            if 'validator' != node_type:
+                logging.error(f'something wrong, new node type?? {node_type}')
+                continue
+
             if record['state'] == 'suspension':
                 suspended_records.append(record)
                 continue
@@ -512,10 +519,6 @@ def loop_work():
                 if 'validator' == record['node_type']:
                     idle_healthy_validator_records.append(record)
 
-        need_save_secret = False
-        if len(suspended_records) > 0:
-            need_save_secret = True
-
         for record in suspended_records:
             if len(idle_healthy_validator_records) <= 0:
                 logging.warning('no healthy idle validator to swap to!!!')
@@ -540,6 +543,13 @@ def loop_work():
             record['prev_best'] = record['substrate_block_height_best']
             record['prev_finalized'] = record['substrate_block_height_finalized']
             record['prev_sync_target'] = record['substrate_block_height_sync_target']
+            del record['substrate_block_height_best']
+            del record['substrate_block_height_finalized']
+            del record['substrate_block_height_sync_target']
+
+        for record in boot_full_node_records:
+            restart_stalled_node_if_nessesary(record)
+
         create_update_operator_secret(CURRENT_SECRET_OBJ)
 
     # reset secret obj

@@ -456,6 +456,7 @@ def restart_stalled_node_if_nessesary(record):
             RESTART_FULLNODE_COUNT.inc(1)
 
 
+
 def loop_work():
     global CURRENT_SECRET_OBJ
     global CURRENT_SECRET_OBJ_BACKUP

@@ -446,6 +446,10 @@ def restart_stalled_node_if_nessesary(record):
     if (now - prev_restart_dt) > max_interval:
         record['restart_datetime'] = convert_date_2_str(now)
         namespace, pod_name = record['namespace'], record['pod_name']
+        pod_ip = record['pod_ip']
+        if pod_ip is None or len(pod_ip) <= 0:
+            logging.error('{}/{} is not running, cannot kill/restart it'.format(namespace, pod_name))
+            return
         kill_pod(name_space, pod_name)
         if node_type == 'bootnode':
             RESTART_BOOTNODE_COUNT.inc(1)

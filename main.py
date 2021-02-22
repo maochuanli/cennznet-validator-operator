@@ -37,7 +37,8 @@ UNHEALTHY_FULLNODE_NUM = Gauge("unhealthy_fullnode_num", 'number of current unhe
 SWAP_VALIDATOR_COUNT = Gauge("swap_validator_count", 'number of swapping validators session key action')
 RESTART_GRANPA_COUNT = Gauge("restart_granpa_count", 'number of restarting validators granpa voting session')
 TAINT_VALIDATOR_COUNT = Gauge("tainted_validator_count", 'number of tainted validators')
-
+RESTART_BOOTNODE_COUNT = Gauge("restart_bootnode_count", 'number of restarting boot nodes')
+RESTART_FULLNODE_COUNT = Gauge("restart_fullnode_count", 'number of restarting full nodes')
 
 def get_pod_in_namespace(namespace, pod_name):
     try:
@@ -348,6 +349,7 @@ def show_data_frame():
             elif 'fullnode' == record['node_type']:
                 UNHEALTHY_FULLNODE_NUM.inc(1)
 
+
 def upload_subkey_to_pod(namespace, pod_name):
     kube_cmd = 'ls -l /subkey && echo HELLOWORLD'
     out = run_cmd_in_namespaced_pod(namespace, pod_name, kube_cmd)
@@ -414,17 +416,20 @@ def kill_pod(namespace, pod_name):
     cmd = 'kubectl delete pod -n {} {}'.format(namespace, pod_name)
     rc, out = run_cmd_until_ok(cmd)
 
+
 def convert_str_2_date(date_time_str):
     try:
         date_time_obj = datetime.datetime.strptime(date_time_str, '%d/%m/%Y %H:%M')
         return date_time_obj
     except:
-        print('cannot parse:', date_time_str)
+        logging.warning('cannot parse:', date_time_str)
     return datetime.datetime(1970, 1, 1, 0, 0)
+
 
 def convert_date_2_str(dateobj):
     dt_str = dateobj.strftime('%d/%m/%Y %H:%M')
     return dt_str
+
 
 def restart_stalled_node_if_nessesary(record):
     node_type = record['node_type']
@@ -442,6 +447,10 @@ def restart_stalled_node_if_nessesary(record):
         record['restart_datetime'] = convert_date_2_str(now)
         namespace, pod_name = record['namespace'], record['pod_name']
         kill_pod(name_space, pod_name)
+        if node_type == 'bootnode':
+            RESTART_BOOTNODE_COUNT.inc(1)
+        elif node_type == 'fullnode':
+            RESTART_FULLNODE_COUNT.inc(1)
 
 
 def loop_work():
@@ -521,14 +530,15 @@ def loop_work():
                 old_namespace, old_pod_name = record[
                                                   'namespace'], record['pod_name']
                 namespace, pod_name, pod_ip = healthy_validator_record[
-                                                  'namespace'], healthy_validator_record['pod_name'], healthy_validator_record['pod_ip']
+                                                  'namespace'], healthy_validator_record['pod_name'], \
+                                              healthy_validator_record['pod_ip']
                 logging.warning(
                     'transfer session key from {}/{} to {}/{}'.format(old_namespace, old_pod_name, namespace, pod_name))
                 insert_keys(namespace, pod_name, session_key)
 
         for record in CURRENT_SECRET_OBJ:
-            record['prev_best'] =        record['substrate_block_height_best']
-            record['prev_finalized'] =   record['substrate_block_height_finalized']
+            record['prev_best'] = record['substrate_block_height_best']
+            record['prev_finalized'] = record['substrate_block_height_finalized']
             record['prev_sync_target'] = record['substrate_block_height_sync_target']
         create_update_operator_secret(CURRENT_SECRET_OBJ)
 

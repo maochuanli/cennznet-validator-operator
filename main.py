@@ -413,6 +413,7 @@ def remove_session_keys(namespace, pod_name):
 
 
 def kill_pod(namespace, pod_name):
+    logging.warning(f'killing pod {namespace}/{pod_name}....')
     cmd = 'kubectl delete pod -n {} {}'.format(namespace, pod_name)
     rc, out = run_cmd_until_ok(cmd)
 
@@ -454,7 +455,6 @@ def restart_stalled_node_if_nessesary(record):
             RESTART_BOOTNODE_COUNT.inc(1)
         elif node_type == 'fullnode':
             RESTART_FULLNODE_COUNT.inc(1)
-
 
 
 def loop_work():

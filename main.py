@@ -449,7 +449,7 @@ def restart_stalled_node_if_nessesary(record):
         if pod_ip is None or len(pod_ip) <= 0:
             logging.error('{}/{} is not running, cannot kill/restart it'.format(namespace, pod_name))
             return
-        kill_pod(name_space, pod_name)
+        kill_pod(namespace, pod_name)
         if node_type == 'bootnode':
             RESTART_BOOTNODE_COUNT.inc(1)
         elif node_type == 'fullnode':

@@ -440,7 +440,7 @@ def restart_stalled_node_if_nessesary(record):
     if healthy is True:
         return
     prev_restart_dt_str = record.get('restart_datetime', '01/01/1970 00:00')
-    prev_restart_dt = convert_str_to_datetime(prev_restart_dt_str)
+    prev_restart_dt = convert_str_2_date(prev_restart_dt_str)
     now = datetime.datetime.now()
     max_interval = datetime.timedelta(minutes=20)
     if (now - prev_restart_dt) > max_interval:
@@ -707,7 +707,7 @@ if __name__ == '__main__':
             stream=sys.stderr)
 
         MAIN_THREAD.start()
-        # FLASK_APP.logger.disabled = True
+        # FLASK_APP.logger.disabled = Trueconvert_str_to_datetime
         logger_werkzeug = logging.getLogger('werkzeug')
         logger_werkzeug.disabled = True
         FLASK_APP.run(host='0.0.0.0', port=8080)

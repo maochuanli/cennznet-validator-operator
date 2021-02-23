@@ -667,7 +667,7 @@ def main_thread():
 
         logging.info('API_INSTANCE: ' + str(API_INSTANCE))
         logging.debug('CURRNET_SECRET_OBJ: ' + str(CURRENT_SECRET_OBJ))
-        logging.info('CHAIN_BASE_PATH:' + str(CHAIN_BASE_PATH) )
+        logging.info('CHAIN_BASE_PATH:' + str(CHAIN_BASE_PATH))
 
         if CHAIN_BASE_PATH is None:
             logging.error('cannot find the chain base path, exit!!!')

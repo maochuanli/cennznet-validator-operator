@@ -23,6 +23,7 @@ import argparse
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
+SECRET_OBJECT_OK = True
 SMS_SECRET_NAME = 'operator-sms-secret'
 SECRET_FILE_NAME = '/tmp/secret.json'
 CURRENT_SECRET_OBJ = None
@@ -458,6 +459,7 @@ def restart_stalled_node_if_nessesary(record):
 
 
 def loop_work():
+    global SECRET_OBJECT_OK
     global CURRENT_SECRET_OBJ
     global CURRENT_SECRET_OBJ_BACKUP
 
@@ -466,6 +468,7 @@ def loop_work():
     CURRENT_SECRET_OBJ_BACKUP = convert_json_2_object(secret_string)
 
     if CURRENT_SECRET_OBJ and len(CURRENT_SECRET_OBJ) > 0:
+        SECRET_OBJECT_OK = True
         extract_pods_ips()
         extract_pods_metrics()
         best, finalized, sync_target = get_max_best_finalized_number()
@@ -555,7 +558,8 @@ def loop_work():
             restart_stalled_node_if_nessesary(record)
 
         create_update_operator_secret(CURRENT_SECRET_OBJ)
-
+    else:
+        SECRET_OBJECT_OK = False
     # reset secret obj
     CURRENT_SECRET_OBJ = None
 
@@ -681,7 +685,7 @@ MAIN_THREAD = Thread(target=main_thread, args=())
 
 @FLASK_APP.route("/")
 def flask_root():
-    if MAIN_THREAD.is_alive():
+    if MAIN_THREAD.is_alive() and SECRET_OBJECT_OK:
         OPERATOR_HEALTHY.set(1)
     else:
         OPERATOR_HEALTHY.set(0)

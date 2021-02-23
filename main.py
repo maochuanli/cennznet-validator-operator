@@ -41,6 +41,7 @@ TAINT_VALIDATOR_COUNT = Gauge("tainted_validator_count", 'number of tainted vali
 RESTART_BOOTNODE_COUNT = Gauge("restart_bootnode_count", 'number of restarting boot nodes')
 RESTART_FULLNODE_COUNT = Gauge("restart_fullnode_count", 'number of restarting full nodes')
 
+
 def get_pod_in_namespace(namespace, pod_name):
     try:
         pod_obj = API_INSTANCE.read_namespaced_pod(namespace=namespace, name=pod_name)
@@ -666,7 +667,7 @@ def main_thread():
 
         logging.info('API_INSTANCE: ' + str(API_INSTANCE))
         logging.debug('CURRNET_SECRET_OBJ: ' + str(CURRENT_SECRET_OBJ))
-        logging.info('CHAIN_BASE_PATH:' + CHAIN_BASE_PATH)
+        logging.info('CHAIN_BASE_PATH:' + str(CHAIN_BASE_PATH) )
 
         if CHAIN_BASE_PATH is None:
             logging.error('cannot find the chain base path, exit!!!')

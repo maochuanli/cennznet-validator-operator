@@ -445,7 +445,7 @@ def restart_stalled_node_if_nessesary(record):
     prev_restart_dt_str = record.get('restart_datetime', '01/01/1970 00:00')
     prev_restart_dt = convert_str_2_date(prev_restart_dt_str)
     now = datetime.datetime.now()
-    max_interval = datetime.timedelta(minutes=20)
+    max_interval = datetime.timedelta(minutes=30)
     if (now - prev_restart_dt) > max_interval:
         record['restart_datetime'] = convert_date_2_str(now)
         namespace, pod_name, pod_ip = record['namespace'], record['pod_name'], record['pod_ip']

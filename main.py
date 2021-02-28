@@ -554,6 +554,10 @@ def loop_work():
                     'transfer session key from {}/{} to {}/{}'.format(old_namespace, old_pod_name, namespace, pod_name))
                 insert_keys(namespace, pod_name, session_key)
 
+
+        for record in boot_full_node_records:
+            restart_stalled_node_if_nessesary(record)
+
         for record in CURRENT_SECRET_OBJ:
             record['prev_best'] = record['substrate_block_height_best']
             record['prev_finalized'] = record['substrate_block_height_finalized']
@@ -566,9 +570,6 @@ def loop_work():
                 del record['substrate_block_height_sync_target']
             if record.get('pod_ip'):
                 del record['pod_ip']
-
-        for record in boot_full_node_records:
-            restart_stalled_node_if_nessesary(record)
 
         create_update_operator_secret(CURRENT_SECRET_OBJ)
     else:

@@ -23,6 +23,7 @@ import argparse
 
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
+SECRET_NAME_BACKUP = 'operator-secret-backup'
 SECRET_OBJECT_OK = True
 SMS_SECRET_NAME = 'operator-sms-secret'
 SECRET_FILE_NAME = '/tmp/secret.json'
@@ -126,6 +127,13 @@ def get_current_secret_as_str():
     cmd = 'kubectl get secret {} -n {} -o json'.format(
         SECRET_NAME, CURRENT_NAMESPACE)
     rc, out = run_cmd(cmd)
+
+    if rc != 0:
+        logging.error('secret lost!!! try load secret from backup')
+        cmd = 'kubectl get secret {} -n {} -o json'.format(
+            SECRET_NAME_BACKUP, CURRENT_NAMESPACE)
+        rc, out = run_cmd(cmd)
+
     json_obj = convert_json_2_object(out)
     try:
         secret_base64 = json_obj['data'][os.path.basename(SECRET_FILE_NAME)]
@@ -144,13 +152,12 @@ def backup_current_secret():
 
     with open(SECRET_FILE_NAME, 'w') as f:
         f.write(current_secret)
-    backup_secret_name = SECRET_NAME + '-backup'
 
     cmd = 'kubectl delete secret --ignore-not-found=true {} -n {}'.format(
-        backup_secret_name, CURRENT_NAMESPACE)
+        SECRET_NAME_BACKUP, CURRENT_NAMESPACE)
     rc, out = run_cmd(cmd)
     cmd = 'kubectl create secret generic {} --from-file={} -n {}'.format(
-        backup_secret_name, SECRET_FILE_NAME, CURRENT_NAMESPACE)
+        SECRET_NAME_BACKUP, SECRET_FILE_NAME, CURRENT_NAMESPACE)
     rc, out = run_cmd(cmd)
     return rc == 0
 

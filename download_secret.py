@@ -21,7 +21,9 @@ from threading import Thread
 import logging
 import argparse
 from os.path import expanduser
+
 USER_HOME = expanduser("~")
+
 
 def run_cmd(cmd):
     logging.info('CMD: ' + cmd)
@@ -34,8 +36,6 @@ def run_cmd(cmd):
     else:
         logging.debug('{},{}'.format(process.returncode, result_txt))
     return process.returncode, result_txt
-
-
 
 
 def convert_base64_2_str(base64_message):
@@ -64,7 +64,6 @@ def convert_object_2_json(python_object):
         return json.dumps(python_object)
     except Exception:
         logging.info(traceback.format_exc())
-        
 
 
 def get_current_secret_as_str(namespace, secret_name, secret_key):
@@ -78,6 +77,7 @@ def get_current_secret_as_str(namespace, secret_name, secret_key):
     except:
         pass
 
+
 def switch_context(context):
     cmd = f'kubectl config use-context {context}'
     run_cmd(cmd)
@@ -89,6 +89,7 @@ def switch_context(context):
 
     return False
 
+
 def write_secret(context, namespace, secret_name, secret_key):
     if switch_context(context):
         secret = get_current_secret_as_str(namespace, secret_name, secret_key)
@@ -97,19 +98,19 @@ def write_secret(context, namespace, secret_name, secret_key):
         with open(os.path.join(USER_HOME, f'{namespace}.json'), 'w') as f:
             f.write(pretty_json)
         logging.info(pretty_json)
+    else:
+        logging.error(f'cannot switch context to {context}')
+
 
 def main():
-    if switch_context('eks-prod'):
-        context, namespace, secret_name, secret_key = 'eks-prod', 'aws-sg-cennznet-validators-operator', 'operator-secret-backup', 'secret.json'
-        write_secret(context, namespace, secret_name, secret_key)
+    context, namespace, secret_name, secret_key = 'eks-prod', 'aws-sg-cennznet-validators-operator', 'operator-secret-backup', 'secret.json'
+    write_secret(context, namespace, secret_name, secret_key)
 
-    if switch_context('aks-mainnet-us'):
-        context, namespace, secret_name, secret_key = 'aks-mainnet-us', 'az-us-cennznet-validators-operator', 'operator-secret-backup', 'secret.json'
-        write_secret(context, namespace, secret_name, secret_key)
+    context, namespace, secret_name, secret_key = 'aks-mainnet-us', 'az-us-cennznet-validators-operator', 'operator-secret-backup', 'secret.json'
+    write_secret(context, namespace, secret_name, secret_key)
 
-    if switch_context('aks-mainnet-ie'):
-        context, namespace, secret_name, secret_key = 'aks-mainnet-ie', 'az-ie-cennznet-validators-operator', 'operator-secret-backup', 'secret.json'
-        write_secret(context, namespace, secret_name, secret_key)
+    context, namespace, secret_name, secret_key = 'aks-mainnet-ie', 'az-ie-cennznet-validators-operator', 'operator-secret-backup', 'secret.json'
+    write_secret(context, namespace, secret_name, secret_key)
 
 
 if __name__ == '__main__':

@@ -641,6 +641,10 @@ def verify_session_keys_on_nodes():
                     any_wrong = True
                 continue
             elif file_count == 4:
+                if len(session_key) <= 0:
+                    logging.error('no session key assigned, but session key files exist!!!')
+                    record['tainted'] = True
+                    any_wrong = True
                 for i in range(4):
                     file_name = lines[i]
                     cmd = 'cat {}/keystore/{}'.format(CHAIN_BASE_PATH, file_name)

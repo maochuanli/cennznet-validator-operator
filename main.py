@@ -561,7 +561,8 @@ def loop_work():
             del record['substrate_block_height_best']
             del record['substrate_block_height_finalized']
             del record['substrate_block_height_sync_target']
-            del record['pod_ip']
+            if record.get('pod_ip'):
+                del record['pod_ip']
 
         for record in boot_full_node_records:
             restart_stalled_node_if_nessesary(record)

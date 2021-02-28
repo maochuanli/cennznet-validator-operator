@@ -558,9 +558,12 @@ def loop_work():
             record['prev_best'] = record['substrate_block_height_best']
             record['prev_finalized'] = record['substrate_block_height_finalized']
             record['prev_sync_target'] = record['substrate_block_height_sync_target']
-            del record['substrate_block_height_best']
-            del record['substrate_block_height_finalized']
-            del record['substrate_block_height_sync_target']
+            if record.get('substrate_block_height_best'):
+                del record['substrate_block_height_best']
+            if record.get('substrate_block_height_finalized'):
+                del record['substrate_block_height_finalized']
+            if record.get('substrate_block_height_sync_target'):
+                del record['substrate_block_height_sync_target']
             if record.get('pod_ip'):
                 del record['pod_ip']
 

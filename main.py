@@ -674,7 +674,7 @@ def exit_if_signalled():
     signal_file = os.path.join(USER_HOME, 'stop_operator')
     if os.path.exists(signal_file):
         logging.error(f'Found signal file {signal_file}, exit!')
-        cmd = 'rm -f {signal_file}'
+        cmd = f'rm -f {signal_file}'
         run_cmd(cmd)
         sys.exit(1)
 

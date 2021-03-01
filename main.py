@@ -20,7 +20,9 @@ from flask import request as flask_request
 from threading import Thread
 import logging
 import argparse
+from os.path import expanduser
 
+USER_HOME = expanduser("~")
 CURRENT_NAMESPACE = 'N/A'
 SECRET_NAME = 'operator-secret'
 SECRET_NAME_BACKUP = 'operator-secret-backup'
@@ -668,6 +670,13 @@ def verify_session_keys_on_nodes():
     return any_wrong
 
 
+def exit_if_signalled():
+    signal_file = os.path.join(USER_HOME, 'stop_operator')
+    if os.path.exists(signal_file):
+        logging.error(f'Found signal file {signal_file}, exit!')
+        sys.exit(1)
+
+
 def main_thread():
     global CURRENT_NAMESPACE
     global CURRENT_SECRET_OBJ
@@ -691,6 +700,7 @@ def main_thread():
             sys.exit(-100)
 
         while True:
+            exit_if_signalled()
             loop_work()
             time.sleep(10)
     except Exception:

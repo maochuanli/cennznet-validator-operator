@@ -699,6 +699,8 @@ def main_thread():
                 logging.error(f'Found signal file {signal_file}, operator paused!')
             else:
                 loop_work()
+            sys.stderr.flush()
+            sys.stdout.flush()
             time.sleep(10)
     except Exception:
         logging.warning(traceback.format_exc())
